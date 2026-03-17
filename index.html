@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chanel — Image Batch Tool</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-2: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --text-muted: #888;
+      --accent: #c8a96e;
+      --accent-hover: #d4b97e;
+      --danger: #c0392b;
+      --success: #27ae60;
+      --radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Layout */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .app-header h1 { font-size: 18px; font-weight: 500; letter-spacing: 1px; }
+    .app-header .stats { color: var(--text-muted); font-size: 13px; }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 0 24px;
+    }
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab .badge {
+      background: var(--surface-2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+    .tab.active .badge { background: var(--accent); color: var(--bg); }
+
+    .main-layout {
+      display: flex;
+      height: calc(100vh - 105px);
+    }
+
+    /* Sidebar filters */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      background: var(--surface);
+    }
+    .sidebar h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      margin-top: 20px;
+    }
+    .sidebar h3:first-child { margin-top: 0; }
+
+    .filter-btn {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      border-radius: var(--radius);
+      font-size: 13px;
+      text-align: left;
+    }
+    .filter-btn:hover { background: var(--surface-2); }
+    .filter-btn.active { background: var(--accent); color: var(--bg); }
+    .filter-btn .count { color: var(--text-muted); font-size: 12px; }
+    .filter-btn.active .count { color: var(--bg); opacity: 0.7; }
+
+    .filter-section { margin-bottom: 8px; }
+
+    /* Content area */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Selection bar */
+    .selection-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .selection-bar button {
+      padding: 6px 16px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .btn-create { background: var(--bg); color: var(--accent); }
+    .btn-create:hover { opacity: 0.9; }
+    .btn-clear { background: transparent; color: var(--bg); text-decoration: underline; margin-right: 12px; }
+
+    /* Image grid */
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .image-card {
+      position: relative;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .image-card:hover { border-color: #444; }
+    .image-card.selected { border-color: var(--accent); }
+    .image-card.grouped { opacity: 0.5; }
+    .image-card.grouped:hover { opacity: 0.7; }
+
+    .image-card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: contain;
+      background: #fff;
+      display: block;
+    }
+    .image-card .card-info {
+      padding: 8px 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .image-card .card-info .ref { color: var(--text); font-weight: 500; }
+    .image-card .card-type {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+    .image-card .card-check {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.5);
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .image-card.selected .card-check {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+    .image-card .group-badge {
+      position: absolute;
+      bottom: 44px;
+      right: 8px;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    /* Groups view */
+    .group-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .group-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      cursor: pointer;
+    }
+    .group-header:hover { background: var(--surface-2); }
+    .group-header h3 { font-size: 15px; font-weight: 500; }
+    .group-header .group-meta { color: var(--text-muted); font-size: 13px; }
+    .group-header .group-rule {
+      font-family: monospace;
+      background: var(--surface-2);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    .group-detail { border-top: 1px solid var(--border); padding: 20px; }
+
+    /* Transform editor */
+    .transform-editor {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .transform-editor h4 {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .transform-blocks { display: flex; flex-direction: column; gap: 10px; }
+
+    .transform-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+    }
+    .transform-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .transform-block-header span { font-size: 13px; font-weight: 500; }
+
+    .param-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .param-row label {
+      font-size: 12px;
+      color: var(--text-muted);
+      min-width: 80px;
+    }
+    .param-row input, .param-row select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      flex: 1;
+      max-width: 200px;
+    }
+    .param-row input:focus, .param-row select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .add-transform-btn {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .url-preview {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      color: var(--accent);
+      margin: 16px 0;
+    }
+
+    /* Preview grid */
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .preview-item {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .preview-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .preview-compare > div {
+      text-align: center;
+      padding: 8px;
+    }
+    .preview-compare img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: contain;
+      background: #fff;
+      display: block;
+    }
+    .preview-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      padding: 6px;
+    }
+    .preview-item .preview-ref {
+      padding: 6px 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-accent { background: var(--accent); color: var(--bg); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn + .btn { margin-left: 8px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 420px;
+      max-width: 90vw;
+    }
+    .modal h3 { margin-bottom: 16px; font-size: 16px; }
+    .modal input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .modal input:focus { outline: none; border-color: var(--accent); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
+
+    /* Loading */
+    .loading { text-align: center; padding: 60px; color: var(--text-muted); }
+
+    /* Ungroup action in gallery */
+    .image-card .ungroup-btn {
+      position: absolute;
+      bottom: 44px;
+      left: 8px;
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      cursor: pointer;
+      display: none;
+    }
+    .image-card.grouped:hover .ungroup-btn { display: block; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <div class="app-header">
+    <h1>CHANEL — Image Batch Tool</h1>
+    <div class="stats" v-if="inventory">
+      {{ inventory.stats.processable }} images
+      &middot; {{ Object.keys(inventory.stats.by_category).length }} catégories
+      &middot; {{ groups.length }} groupes
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab" :class="{ active: currentTab === 'gallery' }" @click="currentTab = 'gallery'">
+      Galerie
+      <span class="badge">{{ filteredImages.length }}</span>
+    </div>
+    <div class="tab" :class="{ active: currentTab === 'groups' }" @click="currentTab = 'groups'">
+      Groupes
+      <span class="badge">{{ groups.length }}</span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div v-if="loading" class="loading">Chargement de l'inventaire...</div>
+
+  <!-- GALLERY TAB -->
+  <div v-if="!loading && currentTab === 'gallery'" class="main-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h3>Catégorie</h3>
+      <div class="filter-section">
+        <button class="filter-btn" :class="{ active: filterCategory === null }" @click="filterCategory = null">
+          Toutes <span class="count">{{ inventory?.stats.processable }}</span>
+        </button>
+        <button v-for="(count, cat) in inventory?.stats.by_category" :key="cat"
+                class="filter-btn" :class="{ active: filterCategory === cat }" @click="filterCategory = cat">
+          {{ cat }} <span class="count">{{ count }}</span>
+        </button>
+      </div>
+
+      <h3>Type</h3>
+      <div class="filter-section">
+        <button class="filter-btn" :class="{ active: filterType === null }" @click="filterType = null">
+          Tous <span class="count">{{ inventory?.stats.processable }}</span>
+        </button>
+        <button v-for="(count, type) in inventory?.stats.by_type" :key="type"
+                class="filter-btn" :class="{ active: filterType === type }" @click="filterType = type">
+          {{ type }} <span class="count">{{ count }}</span>
+        </button>
+      </div>
+
+      <h3>État</h3>
+      <div class="filter-section">
+        <button class="filter-btn" :class="{ active: filterState === null }" @click="filterState = null">
+          Tous
+        </button>
+        <button class="filter-btn" :class="{ active: filterState === 'ungrouped' }" @click="filterState = 'ungrouped'">
+          Non groupées <span class="count">{{ ungroupedCount }}</span>
+        </button>
+        <button class="filter-btn" :class="{ active: filterState === 'grouped' }" @click="filterState = 'grouped'">
+          Groupées <span class="count">{{ groupedCount }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Selection bar -->
+      <div v-if="selectedIds.size > 0" class="selection-bar">
+        <span>{{ selectedIds.size }} image(s) sélectionnée(s)</span>
+        <div>
+          <button class="btn-clear" @click="selectAllFiltered">Tout sélectionner ({{ filteredImages.length }})</button>
+          <button class="btn-clear" @click="selectedIds.clear()">Tout désélectionner</button>
+          <button v-if="selectedGroupedCount > 0" class="btn-create" style="background: var(--danger); color: #fff; margin-right: 8px;"
+                  @click="ungroupSelected">
+            Retirer du groupe ({{ selectedGroupedCount }})
+          </button>
+          <button class="btn-create" @click="showAddToGroupMenu = (groups.length > 0); showCreateGroupModal = (groups.length === 0)">
+            {{ groups.length > 0 ? 'Grouper...' : 'Créer un groupe' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Image grid -->
+      <div class="image-grid">
+        <div v-for="img in filteredImages" :key="img.id"
+             class="image-card"
+             :class="{ selected: selectedIds.has(img.id), grouped: img.group_id }"
+             @click="toggleSelect(img)">
+          <div class="card-check">{{ selectedIds.has(img.id) ? '✓' : '' }}</div>
+          <span class="card-type">{{ img.type }}</span>
+          <span v-if="img.group_id" class="group-badge">{{ getGroupName(img.group_id) }}</span>
+          <button v-if="img.group_id" class="ungroup-btn" @click.stop="ungroupImage(img)">Retirer</button>
+          <img :src="img.thumb_url" :alt="img.filename" loading="lazy"
+               @error="$event.target.src = '/images/' + img.local_path">
+          <div class="card-info">
+            <span class="ref">{{ img.ref }}</span> &middot; {{ img.category }}
+          </div>
+        </div>
+      </div>
+
+      <div v-if="filteredImages.length === 0" class="empty-state">
+        <h3>Aucune image</h3>
+        <p>Ajustez les filtres pour voir des images.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUPS TAB -->
+  <div v-if="!loading && currentTab === 'groups'" class="main-layout" style="display: block; overflow-y: auto;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+
+      <div v-if="groups.length === 0" class="empty-state">
+        <h3>Aucun groupe</h3>
+        <p>Sélectionnez des images dans la Galerie puis créez un groupe.</p>
+      </div>
+
+      <div class="group-list">
+        <div v-for="group in groups" :key="group.id" class="group-card">
+          <div class="group-header" @click="toggleGroup(group.id)">
+            <div>
+              <h3>{{ group.name }}</h3>
+              <span class="group-meta">{{ group.image_ids.length }} images &middot; créé {{ formatDate(group.created_at) }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span v-if="group.cloudinary_chain" class="group-rule">{{ group.cloudinary_chain }}</span>
+              <span>{{ expandedGroup === group.id ? '▲' : '▼' }}</span>
+            </div>
+          </div>
+
+          <!-- Expanded group detail -->
+          <div v-if="expandedGroup === group.id" class="group-detail">
+            <!-- Transform editor -->
+            <div class="transform-editor">
+              <h4>Transformations Cloudinary</h4>
+              <div class="transform-blocks">
+                <div v-for="(block, bi) in group.transformations" :key="bi" class="transform-block">
+                  <div class="transform-block-header">
+                    <span>{{ block.type }}</span>
+                    <button class="btn btn-sm btn-danger" @click="removeTransform(group, bi)">×</button>
+                  </div>
+
+                  <!-- Trim -->
+                  <div v-if="block.type === 'trim'" class="param-row">
+                    <label>Tolérance</label>
+                    <input type="number" v-model.number="block.params.tolerance" min="0" max="100"
+                           @input="updateChain(group)">
+                  </div>
+
+                  <!-- Crop -->
+                  <template v-if="block.type === 'crop'">
+                    <div class="param-row">
+                      <label>Mode</label>
+                      <select v-model="block.params.mode" @change="updateChain(group)">
+                        <option value="crop">crop</option>
+                        <option value="fill">fill</option>
+                        <option value="fit">fit</option>
+                        <option value="pad">pad</option>
+                        <option value="thumb">thumb</option>
+                        <option value="auto">auto</option>
+                      </select>
+                    </div>
+                    <div class="param-row">
+                      <label>Gravity</label>
+                      <select v-model="block.params.gravity" @change="updateChain(group)">
+                        <option value="">auto</option>
+                        <option value="center">center</option>
+                        <option value="north">north</option>
+                        <option value="south">south</option>
+                        <option value="east">east</option>
+                        <option value="west">west</option>
+                        <option value="face">face</option>
+                        <option value="auto">auto (smart)</option>
+                      </select>
+                    </div>
+                    <div class="param-row">
+                      <label>Width</label>
+                      <input type="text" v-model="block.params.width" placeholder="ex: 800 ou iw"
+                             @input="updateChain(group)">
+                    </div>
+                    <div class="param-row">
+                      <label>Height</label>
+                      <input type="text" v-model="block.params.height" placeholder="ex: 800 ou ih"
+                             @input="updateChain(group)">
+                    </div>
+                    <div class="param-row">
+                      <label>Aspect ratio</label>
+                      <input type="text" v-model="block.params.aspect_ratio" placeholder="ex: 1:1, 4:3"
+                             @input="updateChain(group)">
+                    </div>
+                  </template>
+
+                  <!-- Gradient fade -->
+                  <template v-if="block.type === 'gradient_fade'">
+                    <div class="param-row">
+                      <label>Direction</label>
+                      <select v-model="block.params.direction" @change="updateChain(group)">
+                        <option value="bottom">bottom</option>
+                        <option value="top">top</option>
+                        <option value="left">left</option>
+                        <option value="right">right</option>
+                      </select>
+                    </div>
+                    <div class="param-row">
+                      <label>Intensité</label>
+                      <input type="number" v-model.number="block.params.strength" min="0" max="100"
+                             @input="updateChain(group)">
+                    </div>
+                    <div class="param-row">
+                      <label>Y position</label>
+                      <input type="text" v-model="block.params.y" placeholder="ex: 0.5"
+                             @input="updateChain(group)">
+                    </div>
+                  </template>
+
+                  <!-- Custom (raw Cloudinary params) -->
+                  <div v-if="block.type === 'custom'" class="param-row">
+                    <label>Params</label>
+                    <input type="text" v-model="block.params.raw" placeholder="ex: e_sharpen:100"
+                           style="max-width: 400px;" @input="updateChain(group)">
+                  </div>
+
+                  <!-- Quality -->
+                  <div v-if="block.type === 'quality'" class="param-row">
+                    <label>Qualité</label>
+                    <select v-model="block.params.level" @change="updateChain(group)">
+                      <option value="auto">auto</option>
+                      <option value="auto:best">auto:best</option>
+                      <option value="auto:good">auto:good</option>
+                      <option value="auto:eco">auto:eco</option>
+                      <option value="auto:low">auto:low</option>
+                    </select>
+                  </div>
+
+                  <!-- Background -->
+                  <div v-if="block.type === 'background'" class="param-row">
+                    <label>Couleur</label>
+                    <input type="text" v-model="block.params.color" placeholder="ex: white, FFFFFF, transparent"
+                           @input="updateChain(group)">
+                  </div>
+                </div>
+              </div>
+
+              <div class="add-transform-btn">
+                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'trim')">+ Trim</button>
+                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'crop')">+ Crop</button>
+                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'gradient_fade')">+ Gradient Fade</button>
+                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'quality')">+ Quality</button>
+                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'background')">+ Background</button>
+                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'custom')">+ Custom</button>
+              </div>
+            </div>
+
+            <!-- Cloudinary chain preview -->
+            <div v-if="group.cloudinary_chain" class="url-preview">
+              {{ group.cloudinary_chain }}
+            </div>
+
+            <!-- Before/After preview grid -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <h4 style="font-size: 13px; color: var(--text-muted); margin: 0;">PREVIEW</h4>
+                <div style="display: flex; gap: 4px; background: var(--surface-2); border-radius: 6px; padding: 2px;">
+                  <button class="btn btn-sm" :class="groupShowAfter[group.id] ? 'btn-outline' : 'btn-accent'"
+                          style="border: none;" @click="groupShowAfter[group.id] = false">Avant</button>
+                  <button class="btn btn-sm" :class="groupShowAfter[group.id] ? 'btn-accent' : 'btn-outline'"
+                          style="border: none;" @click="groupShowAfter[group.id] = true">Après</button>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <template v-if="groupSelectedIds[group.id]?.size > 0">
+                  <span style="font-size: 12px; color: var(--accent);">{{ groupSelectedIds[group.id].size }} sélectionnée(s)</span>
+                  <button class="btn btn-sm btn-danger" @click="removeFromGroup(group)">Retirer du groupe</button>
+                  <span style="color: var(--border);">|</span>
+                </template>
+                <button class="btn btn-sm btn-outline" @click="saveGroups">Sauvegarder</button>
+                <button class="btn btn-sm btn-accent" @click="exportGroup(group)">Export JSON</button>
+                <button class="btn btn-sm btn-accent" @click="showExportImagesModal = group.id">Export images</button>
+                <button class="btn btn-sm btn-danger" @click="deleteGroup(group.id)">Supprimer</button>
+              </div>
+            </div>
+
+            <div class="preview-grid">
+              <div v-for="imgId in group.image_ids" :key="imgId" class="preview-item"
+                   :style="{ border: groupSelectedIds[group.id]?.has(imgId) ? '2px solid var(--accent)' : '' }">
+                <div style="position: relative; cursor: pointer;" @click="toggleGroupImageSelect(group.id, imgId)">
+                  <div class="card-check" style="z-index: 2;">{{ groupSelectedIds[group.id]?.has(imgId) ? '✓' : '' }}</div>
+                </div>
+                <div>
+                  <img v-if="groupShowAfter[group.id]"
+                       :src="buildTransformedUrl(imgId, group)" loading="lazy"
+                       style="width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; display: block;"
+                       @error="handleAfterError($event, imgId)">
+                  <img v-else
+                       :src="getImageById(imgId)?.thumb_url" loading="lazy"
+                       style="width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; display: block;"
+                       @error="$event.target.src = '/images/' + getImageById(imgId)?.local_path">
+                </div>
+                <div class="preview-ref">{{ getImageById(imgId)?.ref }} &middot; {{ getImageById(imgId)?.type }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export all -->
+      <div v-if="groups.length > 0" style="margin-top: 24px; text-align: right;">
+        <button class="btn btn-accent" @click="exportAll">Exporter tous les groupes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add to Group Menu -->
+  <div v-if="showAddToGroupMenu" class="modal-overlay" @click.self="showAddToGroupMenu = false">
+    <div class="modal">
+      <h3>Ajouter {{ selectedIds.size }} image(s) à...</h3>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+        <button v-for="group in groups" :key="group.id" class="filter-btn" style="background: var(--surface-2);"
+                @click="addToExistingGroup(group.id)">
+          {{ group.name }} <span class="count">{{ group.image_ids.length }} images</span>
+        </button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" @click="showAddToGroupMenu = false">Annuler</button>
+        <button class="btn btn-accent" @click="showAddToGroupMenu = false; showCreateGroupModal = true">
+          + Nouveau groupe
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Group Modal -->
+  <div v-if="showCreateGroupModal" class="modal-overlay" @click.self="showCreateGroupModal = false">
+    <div class="modal">
+      <h3>Créer un groupe</h3>
+      <input type="text" v-model="newGroupName" placeholder="Nom du groupe (ex: bagues-default-centrées)"
+             @keyup.enter="createGroup" ref="groupNameInput">
+      <div class="modal-actions">
+        <button class="btn btn-outline" @click="showCreateGroupModal = false">Annuler</button>
+        <button class="btn btn-accent" @click="createGroup" :disabled="!newGroupName.trim()">
+          Créer ({{ selectedIds.size }} images)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Images Modal -->
+  <div v-if="showExportImagesModal" class="modal-overlay" @click.self="showExportImagesModal = null">
+    <div class="modal">
+      <h3>Exporter les images transformées</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Télécharge toutes les images "après" du groupe depuis Cloudinary.
+      </p>
+      <div style="margin-bottom: 16px;">
+        <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Format</label>
+        <div style="display: flex; gap: 8px;">
+          <button v-for="fmt in ['jpg', 'png', 'webp']" :key="fmt"
+                  class="btn btn-sm" :class="exportFormat === fmt ? 'btn-accent' : 'btn-outline'"
+                  @click="exportFormat = fmt">{{ fmt.toUpperCase() }}</button>
+        </div>
+      </div>
+      <div v-if="exportProgress" style="margin-bottom: 16px;">
+        <div style="font-size: 13px; margin-bottom: 6px;">{{ exportProgress }}</div>
+        <div style="background: var(--surface-2); border-radius: 4px; height: 6px; overflow: hidden;">
+          <div style="height: 100%; background: var(--accent); transition: width 0.3s;"
+               :style="{ width: exportPercent + '%' }"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" @click="showExportImagesModal = null; exportProgress = null; exportFolder = null">
+          {{ exportProgress ? 'Fermer' : 'Annuler' }}
+        </button>
+        <button v-if="exportFolder" class="btn btn-accent" @click="openInFinder(exportFolder)">
+          Ouvrir dans le Finder
+        </button>
+        <button v-else class="btn btn-accent" @click="exportImages(showExportImagesModal)" :disabled="!!exportProgress">
+          Télécharger
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, computed, watch, nextTick, reactive } = Vue;
+
+createApp({
+  setup() {
+    // State
+    const loading = ref(true);
+    const currentTab = ref('gallery');
+    const inventory = ref(null);
+    const groups = ref([]);
+    const selectedIds = reactive(new Set());
+    const filterCategory = ref(null);
+    const filterType = ref(null);
+    const filterState = ref(null);
+    const expandedGroup = ref(null);
+    const showCreateGroupModal = ref(false);
+    const showAddToGroupMenu = ref(false);
+    const newGroupName = ref('');
+    const groupNameInput = ref(null);
+    const groupShowAfter = reactive({});
+    const groupSelectedIds = reactive({});
+    const showExportImagesModal = ref(null);
+    const exportFormat = ref('jpg');
+    const exportProgress = ref(null);
+    const exportPercent = ref(0);
+    const exportFolder = ref(null);
+
+    // Image lookup map
+    const imageMap = computed(() => {
+      const map = {};
+      if (inventory.value) {
+        for (const img of inventory.value.images) {
+          map[img.id] = img;
+        }
+      }
+      return map;
+    });
+
+    // Sync group_id from groups into images
+    function syncGroupIds() {
+      if (!inventory.value) return;
+      // Reset all
+      for (const img of inventory.value.images) {
+        img.group_id = null;
+      }
+      // Apply from groups
+      for (const group of groups.value) {
+        for (const imgId of group.image_ids) {
+          const img = imageMap.value[imgId];
+          if (img) img.group_id = group.id;
+        }
+      }
+    }
+
+    // Filtered images
+    const filteredImages = computed(() => {
+      if (!inventory.value) return [];
+      let imgs = inventory.value.images;
+      if (filterCategory.value) {
+        imgs = imgs.filter(i => i.category === filterCategory.value);
+      }
+      if (filterType.value) {
+        imgs = imgs.filter(i => i.type === filterType.value);
+      }
+      if (filterState.value === 'ungrouped') {
+        imgs = imgs.filter(i => !i.group_id);
+      } else if (filterState.value === 'grouped') {
+        imgs = imgs.filter(i => i.group_id);
+      }
+      return imgs;
+    });
+
+    const ungroupedCount = computed(() => {
+      if (!inventory.value) return 0;
+      return inventory.value.images.filter(i => !i.group_id).length;
+    });
+
+    const groupedCount = computed(() => {
+      if (!inventory.value) return 0;
+      return inventory.value.images.filter(i => i.group_id).length;
+    });
+
+    // Selectable filtered images (not already grouped)
+    const selectableFilteredCount = computed(() => {
+      return filteredImages.value.filter(i => !i.group_id).length;
+    });
+
+    // Select all visible images (grouped or not)
+    function selectAllFiltered() {
+      for (const img of filteredImages.value) {
+        selectedIds.add(img.id);
+      }
+    }
+
+    // Count how many selected images are grouped
+    const selectedGroupedCount = computed(() => {
+      let count = 0;
+      for (const id of selectedIds) {
+        const img = imageMap.value[id];
+        if (img?.group_id) count++;
+      }
+      return count;
+    });
+
+    // Remove all selected images from their groups
+    function ungroupSelected() {
+      for (const id of selectedIds) {
+        const img = imageMap.value[id];
+        if (!img?.group_id) continue;
+        for (const group of groups.value) {
+          group.image_ids = group.image_ids.filter(gid => gid !== id);
+        }
+      }
+      // Remove empty groups
+      groups.value = groups.value.filter(g => g.image_ids.length > 0);
+      selectedIds.clear();
+      syncGroupIds();
+      saveGroups();
+    }
+
+    // Toggle select
+    function toggleSelect(img) {
+      if (selectedIds.has(img.id)) {
+        selectedIds.delete(img.id);
+      } else {
+        selectedIds.add(img.id);
+      }
+    }
+
+    // Add selection to existing group
+    function addToExistingGroup(groupId) {
+      const group = groups.value.find(g => g.id === groupId);
+      if (!group) return;
+      const existing = new Set(group.image_ids);
+      for (const id of selectedIds) {
+        if (!existing.has(id)) group.image_ids.push(id);
+      }
+      selectedIds.clear();
+      showAddToGroupMenu.value = false;
+      syncGroupIds();
+      saveGroups();
+    }
+
+    // Create group
+    function createGroup() {
+      if (!newGroupName.value.trim() || selectedIds.size === 0) return;
+
+      const group = {
+        id: 'grp_' + Date.now(),
+        name: newGroupName.value.trim(),
+        created_at: new Date().toISOString(),
+        image_ids: [...selectedIds],
+        transformations: [],
+        cloudinary_chain: ''
+      };
+
+      groups.value.push(group);
+      selectedIds.clear();
+      newGroupName.value = '';
+      showCreateGroupModal.value = false;
+      syncGroupIds();
+      saveGroups();
+    }
+
+    // Delete group
+    function deleteGroup(groupId) {
+      groups.value = groups.value.filter(g => g.id !== groupId);
+      expandedGroup.value = null;
+      syncGroupIds();
+      saveGroups();
+    }
+
+    // Ungroup single image
+    function ungroupImage(img) {
+      for (const group of groups.value) {
+        group.image_ids = group.image_ids.filter(id => id !== img.id);
+      }
+      // Remove empty groups
+      groups.value = groups.value.filter(g => g.image_ids.length > 0);
+      syncGroupIds();
+      saveGroups();
+    }
+
+    // Toggle select image within a group (in Groups view)
+    function toggleGroupImageSelect(groupId, imgId) {
+      if (!groupSelectedIds[groupId]) groupSelectedIds[groupId] = new Set();
+      if (groupSelectedIds[groupId].has(imgId)) {
+        groupSelectedIds[groupId].delete(imgId);
+      } else {
+        groupSelectedIds[groupId].add(imgId);
+      }
+      // Force reactivity
+      groupSelectedIds[groupId] = new Set(groupSelectedIds[groupId]);
+    }
+
+    // Remove selected images from a group (in Groups view)
+    function removeFromGroup(group) {
+      const sel = groupSelectedIds[group.id];
+      if (!sel || sel.size === 0) return;
+      group.image_ids = group.image_ids.filter(id => !sel.has(id));
+      groupSelectedIds[group.id] = new Set();
+      // Remove empty groups
+      if (group.image_ids.length === 0) {
+        groups.value = groups.value.filter(g => g.id !== group.id);
+        expandedGroup.value = null;
+      }
+      syncGroupIds();
+      saveGroups();
+    }
+
+    // Toggle group expand
+    function toggleGroup(groupId) {
+      expandedGroup.value = expandedGroup.value === groupId ? null : groupId;
+    }
+
+    // Get group name by id
+    function getGroupName(groupId) {
+      const g = groups.value.find(g => g.id === groupId);
+      return g ? g.name : '';
+    }
+
+    // Get image by id
+    function getImageById(imgId) {
+      return imageMap.value[imgId] || null;
+    }
+
+    // Transform management
+    function addTransform(group, type) {
+      const defaults = {
+        trim: { tolerance: 50 },
+        crop: { mode: 'crop', gravity: 'center', width: '', height: '', aspect_ratio: '' },
+        gradient_fade: { direction: 'bottom', strength: 40, y: '' },
+        quality: { level: 'auto:good' },
+        background: { color: 'white' },
+        custom: { raw: '' }
+      };
+      group.transformations.push({ type, params: { ...defaults[type] } });
+      updateChain(group);
+    }
+
+    function removeTransform(group, index) {
+      group.transformations.splice(index, 1);
+      updateChain(group);
+    }
+
+    // Build Cloudinary chain string
+    function buildChain(transformations) {
+      const parts = [];
+      for (const block of transformations) {
+        const p = block.params;
+        switch (block.type) {
+          case 'trim': {
+            parts.push(`c_trim:${p.tolerance || 10}`);
+            break;
+          }
+          case 'crop': {
+            let seg = `c_${p.mode || 'crop'}`;
+            if (p.gravity) seg += `,g_${p.gravity}`;
+            if (p.width) seg += `,w_${p.width}`;
+            if (p.height) seg += `,h_${p.height}`;
+            if (p.aspect_ratio) seg += `,ar_${p.aspect_ratio}`;
+            parts.push(seg);
+            break;
+          }
+          case 'gradient_fade': {
+            let seg = `e_gradient_fade`;
+            if (p.strength) seg += `:${p.strength}`;
+            if (p.direction && p.direction !== 'bottom') seg += `,e_gradient_fade_direction:${p.direction}`;
+            if (p.y) seg += `,y_${p.y}`;
+            parts.push(seg);
+            break;
+          }
+          case 'quality': {
+            parts.push(`q_${p.level || 'auto'}`);
+            break;
+          }
+          case 'background': {
+            parts.push(`b_${p.color || 'white'}`);
+            break;
+          }
+          case 'custom': {
+            if (p.raw) parts.push(p.raw);
+            break;
+          }
+        }
+      }
+      return parts.join('/');
+    }
+
+    function updateChain(group) {
+      group.cloudinary_chain = buildChain(group.transformations);
+      saveGroups();
+    }
+
+    // Build transformed URL for preview
+    function buildTransformedUrl(imgId, group) {
+      const img = imageMap.value[imgId];
+      if (!img || !group.cloudinary_chain) return img?.thumb_url || '';
+      // Insert custom transforms into the Cloudinary URL
+      // Original: https://www.chanel.com/images/t_one/q_auto:good,f_auto,fl_lossy,dpr_1.1/w_1240/{filename}
+      // Transformed: https://www.chanel.com/images/t_one/{chain}/q_auto:good,f_auto,fl_lossy/w_300/{filename}
+      const base = 'https://www.chanel.com/images/';
+      const chain = group.cloudinary_chain;
+      return `${base}t_one/${chain}/q_auto:good,f_auto,fl_lossy/w_400/${img.filename}`;
+    }
+
+    function handleAfterError(event, imgId) {
+      // Fallback: show original image if transformed URL fails
+      const img = imageMap.value[imgId];
+      if (img) event.target.src = '/images/' + img.local_path;
+    }
+
+    // Persistence
+    async function saveGroups() {
+      try {
+        await fetch('/api/groups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groups: groups.value })
+        });
+      } catch (e) {
+        console.error('Save failed:', e);
+      }
+    }
+
+    // Export
+    function exportGroup(group) {
+      const mapping = group.image_ids.map(imgId => {
+        const img = imageMap.value[imgId];
+        return {
+          filename: img?.filename,
+          ref: img?.ref,
+          category: img?.category,
+          type: img?.type,
+          original_url: img?.full_url,
+          transformed_url: buildTransformedUrl(imgId, group).replace('/w_400/', '/w_1240/'),
+          cloudinary_chain: group.cloudinary_chain
+        };
+      });
+
+      downloadJson(`export-${group.name}.json`, { group: group.name, images: mapping });
+    }
+
+    function exportAll() {
+      const allMappings = groups.value.map(group => ({
+        group: group.name,
+        cloudinary_chain: group.cloudinary_chain,
+        images: group.image_ids.map(imgId => {
+          const img = imageMap.value[imgId];
+          return {
+            filename: img?.filename,
+            ref: img?.ref,
+            category: img?.category,
+            type: img?.type,
+            original_url: img?.full_url,
+            transformed_url: buildTransformedUrl(imgId, group).replace('/w_400/', '/w_1240/')
+          };
+        })
+      }));
+
+      downloadJson('export-all-groups.json', { exported_at: new Date().toISOString(), groups: allMappings });
+    }
+
+    // Export images as files via server
+    async function exportImages(groupId) {
+      const group = groups.value.find(g => g.id === groupId);
+      if (!group || !group.cloudinary_chain) return;
+
+      const images = group.image_ids.map(imgId => {
+        const img = imageMap.value[imgId];
+        return {
+          id: imgId,
+          filename: img?.filename,
+          url: buildTransformedUrl(imgId, group).replace('/w_400/', '/w_1240/')
+        };
+      });
+
+      exportProgress.value = `0 / ${images.length}`;
+      exportPercent.value = 0;
+
+      try {
+        const res = await fetch('/api/export-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            group_name: group.name,
+            format: exportFormat.value,
+            images
+          })
+        });
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const msg = JSON.parse(line);
+              if (msg.progress) {
+                exportProgress.value = msg.progress;
+                exportPercent.value = msg.percent || 0;
+              }
+              if (msg.done) {
+                exportProgress.value = `Terminé — ${msg.total} images dans ${msg.folder}`;
+                exportPercent.value = 100;
+                exportFolder.value = msg.folder;
+              }
+              if (msg.error) {
+                exportProgress.value = `Erreur: ${msg.error}`;
+              }
+            } catch {}
+          }
+        }
+      } catch (e) {
+        exportProgress.value = `Erreur: ${e.message}`;
+      }
+    }
+
+    async function openInFinder(folder) {
+      await fetch('/api/open-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder })
+      });
+    }
+
+    function downloadJson(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Init
+    async function init() {
+      try {
+        const [invRes, grpRes] = await Promise.all([
+          fetch('/api/inventory'),
+          fetch('/api/groups')
+        ]);
+        inventory.value = await invRes.json();
+        const grpData = await grpRes.json();
+        groups.value = grpData.groups || [];
+        syncGroupIds();
+      } catch (e) {
+        console.error('Init failed:', e);
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    // Watch modal open to focus input
+    watch(showCreateGroupModal, (val) => {
+      if (val) {
+        nextTick(() => groupNameInput.value?.focus());
+      }
+    });
+
+    init();
+
+    return {
+      loading, currentTab, inventory, groups, selectedIds,
+      filterCategory, filterType, filterState,
+      expandedGroup, showCreateGroupModal, showAddToGroupMenu, newGroupName, groupNameInput,
+      groupShowAfter, groupSelectedIds,
+      showExportImagesModal, exportFormat, exportProgress, exportPercent, exportFolder, exportImages, openInFinder,
+      filteredImages, ungroupedCount, groupedCount, selectableFilteredCount, selectedGroupedCount,
+      selectAllFiltered, toggleSelect, createGroup, addToExistingGroup, deleteGroup, ungroupImage, ungroupSelected,
+      toggleGroup, toggleGroupImageSelect, removeFromGroup, getGroupName, getImageById,
+      addTransform, removeTransform, updateChain,
+      buildTransformedUrl, handleAfterError,
+      saveGroups, exportGroup, exportAll, formatDate
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
