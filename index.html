@@ -444,6 +444,193 @@
       display: none;
     }
     .image-card.grouped:hover .ungroup-btn { display: block; }
+
+    /* Scanner tab */
+    .scanner-layout {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+    .url-input-area {
+      width: 100%;
+      min-height: 120px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 12px;
+      font-size: 13px;
+      font-family: monospace;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+    .url-input-area:focus { outline: none; border-color: var(--accent); }
+    .url-input-area::placeholder { color: var(--text-muted); opacity: 0.6; }
+    .scan-progress-bar {
+      background: var(--surface-2);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+    .scan-progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+    .scan-log {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      height: 260px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .scan-log-entry { color: var(--text-muted); }
+    .scan-log-entry.phase-plp { color: var(--accent); font-weight: 500; }
+    .scan-log-entry.phase-plp_done { color: var(--accent); }
+    .scan-log-entry.phase-pdp_done { color: var(--text); }
+    .scan-log-entry.phase-done { color: var(--success); font-weight: 500; }
+    .scan-log-entry.phase-error,
+    .scan-log-entry.phase-plp_error,
+    .scan-log-entry.phase-pdp_error { color: var(--danger); }
+    .scan-stats {
+      display: flex;
+      gap: 24px;
+      margin-top: 20px;
+      margin-bottom: 16px;
+    }
+    .scan-stat {
+      text-align: center;
+    }
+    .scan-stat-value {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .scan-stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Block reorder buttons */
+    .transform-block-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .block-reorder {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      margin-right: 4px;
+    }
+    .block-reorder button {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0 4px;
+      font-size: 9px;
+      line-height: 12px;
+      border-radius: 3px;
+    }
+    .block-reorder button:hover { color: var(--text); border-color: var(--accent); }
+    .block-reorder button:disabled { opacity: 0.25; cursor: default; }
+
+    /* Center picker */
+    .center-picker-container {
+      margin: 12px 0;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .center-picker-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .center-picker {
+      position: relative;
+      display: inline-block;
+      cursor: crosshair;
+      max-width: 500px;
+      user-select: none;
+    }
+    .center-picker img {
+      display: block;
+      width: 100%;
+      background: #fff;
+      border-radius: 4px;
+    }
+    .crosshair-h, .crosshair-v {
+      position: absolute;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .crosshair-h {
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(200, 169, 110, 0.6);
+    }
+    .crosshair-v {
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(200, 169, 110, 0.6);
+    }
+    .center-marker {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 3;
+    }
+    .center-marker::before, .center-marker::after {
+      content: '';
+      position: absolute;
+      background: var(--accent);
+      border-radius: 1px;
+    }
+    .center-marker::before {
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      transform: translateX(-50%);
+    }
+    .center-marker::after {
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      transform: translateY(-50%);
+    }
+    .center-marker-ring {
+      position: absolute;
+      inset: 2px;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+    }
+    .center-coords {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      align-items: center;
+    }
+    .center-coords .param-row {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
@@ -452,7 +639,7 @@
   <!-- Header -->
   <div class="app-header">
     <h1>CHANEL — Image Batch Tool</h1>
-    <div class="stats" v-if="inventory">
+    <div class="stats" v-if="inventory && inventory.stats">
       {{ inventory.stats.processable }} images
       &middot; {{ Object.keys(inventory.stats.by_category).length }} catégories
       &middot; {{ groups.length }} groupes
@@ -468,6 +655,9 @@
     <div class="tab" :class="{ active: currentTab === 'groups' }" @click="currentTab = 'groups'">
       Groupes
       <span class="badge">{{ groups.length }}</span>
+    </div>
+    <div class="tab" :class="{ active: currentTab === 'scanner' }" @click="currentTab = 'scanner'">
+      Scanner
     </div>
   </div>
 
@@ -525,6 +715,10 @@
           <button v-if="selectedGroupedCount > 0" class="btn-create" style="background: var(--danger); color: #fff; margin-right: 8px;"
                   @click="ungroupSelected">
             Retirer du groupe ({{ selectedGroupedCount }})
+          </button>
+          <button class="btn-create" style="background: var(--danger); color: #fff; margin-right: 8px;"
+                  @click="deleteSelectedImages">
+            Supprimer ({{ selectedIds.size }})
           </button>
           <button class="btn-create" @click="showAddToGroupMenu = (groups.length > 0); showCreateGroupModal = (groups.length === 0)">
             {{ groups.length > 0 ? 'Grouper...' : 'Créer un groupe' }}
@@ -587,7 +781,11 @@
               <div class="transform-blocks">
                 <div v-for="(block, bi) in group.transformations" :key="bi" class="transform-block">
                   <div class="transform-block-header">
-                    <span>{{ block.type }}</span>
+                    <div class="block-reorder">
+                      <button :disabled="bi === 0" @click="moveTransform(group, bi, -1)" title="Monter">▲</button>
+                      <button :disabled="bi === group.transformations.length - 1" @click="moveTransform(group, bi, 1)" title="Descendre">▼</button>
+                    </div>
+                    <span style="flex: 1;">{{ block.type }}</span>
                     <button class="btn btn-sm btn-danger" @click="removeTransform(group, bi)">×</button>
                   </div>
 
@@ -689,6 +887,52 @@
                     <input type="text" v-model="block.params.color" placeholder="ex: white, FFFFFF, transparent"
                            @input="updateChain(group)">
                   </div>
+
+                  <!-- Centre (focal point) -->
+                  <template v-if="block.type === 'center'">
+                    <div class="center-picker-container">
+                      <div class="center-picker-label">Cliquez sur l'image pour définir le centre</div>
+                      <div class="center-picker"
+                           @mousemove="onCenterPickerMove($event, group.id)"
+                           @mouseleave="onCenterPickerLeave(group.id)"
+                           @click="onCenterPickerClick($event, group, bi)">
+                        <img :src="getImageById(group.image_ids[0])?.full_url"
+                             draggable="false"
+                             @dragstart.prevent
+                             @load="onPickerImageLoad($event, group, bi)"
+                             @error="$event.target.src = '/images/' + getImageById(group.image_ids[0])?.local_path">
+                        <!-- Crosshair lines following cursor -->
+                        <div v-if="centerPickerCursor[group.id]" class="crosshair-h"
+                             :style="{ top: centerPickerCursor[group.id].y + 'px' }"></div>
+                        <div v-if="centerPickerCursor[group.id]" class="crosshair-v"
+                             :style="{ left: centerPickerCursor[group.id].x + 'px' }"></div>
+                        <!-- Fixed marker at chosen point -->
+                        <div v-if="block.params.x != 0.5 || block.params.y != 0.5" class="center-marker"
+                             :style="{ left: (block.params.x * 100) + '%', top: (block.params.y * 100) + '%' }">
+                          <div class="center-marker-ring"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="center-coords">
+                      <div class="param-row">
+                        <label>X</label>
+                        <input type="number" v-model.number="block.params.x" min="0" max="1" step="0.01"
+                               @input="updateChain(group)">
+                      </div>
+                      <div class="param-row">
+                        <label>Y</label>
+                        <input type="number" v-model.number="block.params.y" min="0" max="1" step="0.01"
+                               @input="updateChain(group)">
+                      </div>
+                      <button class="btn btn-sm btn-outline" @click="block.params.x = 0.5; block.params.y = 0.5; updateChain(group)">Reset</button>
+                    </div>
+                    <div v-if="block.params.ref_width" style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                      Source : {{ block.params.ref_width }}×{{ block.params.ref_height }}px
+                      <template v-if="block.params.x != 0.5 || block.params.y != 0.5">
+                        — Décalage : {{ Math.round((block.params.x - 0.5) * block.params.ref_width) }}px, {{ Math.round((block.params.y - 0.5) * block.params.ref_height) }}px
+                      </template>
+                    </div>
+                  </template>
                 </div>
               </div>
 
@@ -698,6 +942,7 @@
                 <button class="btn btn-sm btn-outline" @click="addTransform(group, 'gradient_fade')">+ Gradient Fade</button>
                 <button class="btn btn-sm btn-outline" @click="addTransform(group, 'quality')">+ Quality</button>
                 <button class="btn btn-sm btn-outline" @click="addTransform(group, 'background')">+ Background</button>
+                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'center')">+ Centre</button>
                 <button class="btn btn-sm btn-outline" @click="addTransform(group, 'custom')">+ Custom</button>
               </div>
             </div>
@@ -757,6 +1002,83 @@
       <!-- Export all -->
       <div v-if="groups.length > 0" style="margin-top: 24px; text-align: right;">
         <button class="btn btn-accent" @click="exportAll">Exporter tous les groupes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCANNER TAB -->
+  <div v-if="currentTab === 'scanner'" style="overflow-y: auto; height: calc(100vh - 105px);">
+    <div class="scanner-layout">
+      <div style="margin-bottom: 20px;">
+        <h2 style="font-size: 16px; font-weight: 500; margin-bottom: 4px;">Scanner des PLPs Chanel</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          Entrez une URL de PLP par ligne. Le scanner extraira les liens PDP de chaque page,
+          puis collectera les URLs d'images Cloudinary de chaque produit.
+        </p>
+      </div>
+
+      <textarea
+        class="url-input-area"
+        v-model="scanUrls"
+        placeholder="https://www.chanel.com/fr/joaillerie/bagues/c/3x1x2/
+https://www.chanel.com/fr/joaillerie/colliers/c/3x1x1/
+https://www.chanel.com/fr/joaillerie/boucles-doreilles/c/3x1x3/"
+        :disabled="scanRunning"
+      ></textarea>
+
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <button class="btn btn-accent" @click="startScan" :disabled="scanRunning || !scanUrls.trim()">
+          {{ scanRunning ? 'Scan en cours...' : 'Lancer le scan' }}
+        </button>
+        <button v-if="!scanRunning && scanLog.length" class="btn btn-outline" @click="clearScan">
+          Reinitialiser
+        </button>
+        <button v-if="scanDone && !scanRunning" class="btn btn-accent" @click="loadScannedInventory">
+          Charger dans la Galerie
+        </button>
+        <span v-if="scanRunning" style="font-size: 13px; color: var(--text-muted);">{{ scanStatus }}</span>
+      </div>
+
+      <div v-if="scanRunning || scanLog.length">
+        <div class="scan-progress-bar">
+          <div class="scan-progress-bar-fill" :style="{ width: scanPercent + '%' }"></div>
+        </div>
+        <div class="scan-log" ref="scanLogEl">
+          <div v-for="(entry, i) in scanLog" :key="i"
+               class="scan-log-entry" :class="'phase-' + (entry.phase || 'info')">
+            {{ entry.text }}
+          </div>
+        </div>
+      </div>
+
+      <div v-if="scanResult" class="scan-stats">
+        <div class="scan-stat">
+          <div class="scan-stat-value" style="color: var(--accent);">{{ scanResult.total }}</div>
+          <div class="scan-stat-label">Total inventaire</div>
+        </div>
+        <div class="scan-stat">
+          <div class="scan-stat-value" style="color: var(--success);">{{ scanResult.new_count }}</div>
+          <div class="scan-stat-label">Nouvelles</div>
+        </div>
+        <div class="scan-stat" v-if="scanResult.existing_count">
+          <div class="scan-stat-value" style="color: var(--text);">{{ scanResult.existing_count }}</div>
+          <div class="scan-stat-label">Existantes</div>
+        </div>
+        <div class="scan-stat" v-if="scanResult.duplicate_count">
+          <div class="scan-stat-value" style="color: var(--text-muted);">{{ scanResult.duplicate_count }}</div>
+          <div class="scan-stat-label">Doublons</div>
+        </div>
+      </div>
+
+      <div v-if="scanResult && scanResult.by_category" style="margin-top: 12px;">
+        <h3 style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Par categorie</h3>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <div v-for="(count, cat) in scanResult.by_category" :key="cat"
+               style="background: var(--surface); padding: 8px 16px; border-radius: var(--radius); font-size: 13px;">
+            <span style="color: var(--text-muted);">{{ cat }}</span>
+            <span style="margin-left: 8px; font-weight: 500;">{{ count }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -853,6 +1175,7 @@ createApp({
     const groupNameInput = ref(null);
     const groupShowAfter = reactive({});
     const groupSelectedIds = reactive({});
+    const centerPickerCursor = reactive({});
     const showExportImagesModal = ref(null);
     const exportFormat = ref('jpg');
     const exportProgress = ref(null);
@@ -1066,7 +1389,8 @@ createApp({
         gradient_fade: { direction: 'bottom', strength: 40, y: '' },
         quality: { level: 'auto:good' },
         background: { color: 'white' },
-        custom: { raw: '' }
+        custom: { raw: '' },
+        center: { x: 0.5, y: 0.5, ref_width: 0, ref_height: 0 }
       };
       group.transformations.push({ type, params: { ...defaults[type] } });
       updateChain(group);
@@ -1075,6 +1399,64 @@ createApp({
     function removeTransform(group, index) {
       group.transformations.splice(index, 1);
       updateChain(group);
+    }
+
+    function moveTransform(group, index, direction) {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= group.transformations.length) return;
+      const arr = group.transformations;
+      const tmp = arr[index];
+      arr[index] = arr[newIndex];
+      arr[newIndex] = tmp;
+      // Force reactivity by replacing the array
+      group.transformations = [...arr];
+      updateChain(group);
+    }
+
+    // Center picker event handlers
+    function onCenterPickerMove(event, groupId) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      centerPickerCursor[groupId] = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    }
+
+    function onCenterPickerLeave(groupId) {
+      delete centerPickerCursor[groupId];
+    }
+
+    function onCenterPickerClick(event, group, blockIndex) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = Math.round(((event.clientX - rect.left) / rect.width) * 100) / 100;
+      const y = Math.round(((event.clientY - rect.top) / rect.height) * 100) / 100;
+      group.transformations[blockIndex].params.x = Math.max(0, Math.min(1, x));
+      group.transformations[blockIndex].params.y = Math.max(0, Math.min(1, y));
+      updateChain(group);
+    }
+
+    function onPickerImageLoad(event, group, blockIndex) {
+      const img = event.target;
+      const block = group.transformations[blockIndex];
+      if (block && img.naturalWidth > 0) {
+        // The full_url uses w_1240, but Cloudinary may return actual dimensions
+        // We need the ORIGINAL size. Estimate by scaling from the known w_1240 param.
+        // full_url pattern: .../w_1240/filename — the actual natural size IS 1240-ish after resize
+        // But the original image before w_1240 is bigger. We'll detect it by loading without w_
+        const firstImg = getImageById(group.image_ids[0]);
+        if (firstImg && (!block.params.ref_width || block.params.ref_width === 0)) {
+          // Load the image without width constraint to get real dimensions
+          const probe = new Image();
+          probe.crossOrigin = 'anonymous';
+          probe.onload = () => {
+            block.params.ref_width = probe.naturalWidth;
+            block.params.ref_height = probe.naturalHeight;
+            updateChain(group);
+          };
+          // Build URL without w_ to get original dimensions
+          probe.src = `https://www.chanel.com/images/t_one/q_auto:low,f_auto,fl_lossy/${firstImg.filename}`;
+        }
+      }
     }
 
     // Build Cloudinary chain string
@@ -1110,6 +1492,26 @@ createApp({
           }
           case 'background': {
             parts.push(`b_${p.color || 'white'}`);
+            break;
+          }
+          case 'center': {
+            const cx = p.x ?? 0.5;
+            const cy = p.y ?? 0.5;
+            const rw = p.ref_width || 0;
+            const rh = p.ref_height || 0;
+            if (rw > 0 && rh > 0 && (cx !== 0.5 || cy !== 0.5)) {
+              const px = Math.round(cx * rw);
+              const py = Math.round(cy * rh);
+              // Translation: shift content so focal point lands at image center
+              // 1. Pad symmetrically to create room for the shift
+              // 2. Crop back to original size with offset → pure translation
+              const offX = px - Math.round(rw / 2);
+              const offY = py - Math.round(rh / 2);
+              const padW = rw + 2 * Math.abs(offX);
+              const padH = rh + 2 * Math.abs(offY);
+              parts.push(`c_pad,w_${padW},h_${padH},g_center,b_transparent`);
+              parts.push(`c_crop,w_${rw},h_${rh},g_center,x_${offX},y_${offY}`);
+            }
             break;
           }
           case 'custom': {
@@ -1278,22 +1680,193 @@ createApp({
       return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     }
 
+    // Delete selected images from inventory
+    async function deleteSelectedImages() {
+      if (selectedIds.size === 0 || !inventory.value) return;
+      const idsToDelete = new Set(selectedIds);
+
+      // Remove from inventory
+      inventory.value.images = inventory.value.images.filter(img => !idsToDelete.has(img.id));
+
+      // Remove from groups
+      for (const group of groups.value) {
+        group.image_ids = group.image_ids.filter(id => !idsToDelete.has(id));
+      }
+      groups.value = groups.value.filter(g => g.image_ids.length > 0);
+
+      // Rebuild stats
+      const stats = { total: inventory.value.images.length, by_category: {}, by_type: {} };
+      for (const img of inventory.value.images) {
+        stats.by_category[img.category] = (stats.by_category[img.category] || 0) + 1;
+        stats.by_type[img.type] = (stats.by_type[img.type] || 0) + 1;
+      }
+      stats.processable = inventory.value.images.length;
+      inventory.value.stats = stats;
+
+      selectedIds.clear();
+      syncGroupIds();
+      saveGroups();
+
+      // Persist updated inventory to server
+      try {
+        await fetch('/api/inventory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(inventory.value)
+        });
+      } catch (e) {
+        console.error('Failed to save inventory:', e);
+      }
+    }
+
+    // --- Scanner ---
+    const scanUrls = ref('');
+    const scanRunning = ref(false);
+    const scanStatus = ref('');
+    const scanPercent = ref(0);
+    const scanLog = ref([]);
+    const scanResult = ref(null);
+    const scanDone = ref(false);
+    const scanLogEl = ref(null);
+
+    function clearScan() {
+      scanLog.value = [];
+      scanResult.value = null;
+      scanDone.value = false;
+      scanPercent.value = 0;
+      scanStatus.value = '';
+    }
+
+    function appendLog(text, phase = 'info') {
+      scanLog.value.push({ text, phase });
+      nextTick(() => {
+        if (scanLogEl.value) scanLogEl.value.scrollTop = scanLogEl.value.scrollHeight;
+      });
+    }
+
+    async function startScan() {
+      const urls = scanUrls.value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+      if (!urls.length) return;
+
+      scanRunning.value = true;
+      scanResult.value = null;
+      scanDone.value = false;
+      scanLog.value = [];
+      scanPercent.value = 0;
+      scanStatus.value = 'Initialisation...';
+
+      try {
+        const res = await fetch('/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ urls })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+          appendLog(`Erreur: ${err.error || res.statusText}`, 'error');
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const msg = JSON.parse(line);
+
+              if (msg.phase === 'init') {
+                appendLog(`Scan de ${msg.total_plps} PLP(s)...`, 'info');
+              } else if (msg.phase === 'browser' || msg.phase === 'info') {
+                appendLog(msg.step, 'info');
+              } else if (msg.phase === 'plp') {
+                appendLog(`PLP ${msg.index + 1}/${msg.total}: ${msg.category} — ${msg.url}`, 'plp');
+                scanStatus.value = `PLP ${msg.index + 1}/${msg.total} (${msg.category})`;
+                scanPercent.value = Math.round((msg.index / msg.total) * 30);
+              } else if (msg.phase === 'plp_done') {
+                appendLog(`  → ${msg.pdp_count} produits trouves (${msg.category})`, 'plp_done');
+                scanPercent.value = Math.round(((msg.index + 1) / msg.total) * 30);
+              } else if (msg.phase === 'plp_error') {
+                appendLog(`Erreur PLP ${msg.url}: ${msg.error}`, 'plp_error');
+              } else if (msg.phase === 'pdp') {
+                scanStatus.value = `PDP ${msg.pdp_index + 1}/${msg.pdp_total}`;
+                scanPercent.value = 30 + Math.round((msg.pdp_index / Math.max(msg.pdp_total, 1)) * 65);
+              } else if (msg.phase === 'pdp_done') {
+                if (msg.images_found > 0) {
+                  appendLog(`  PDP: ${msg.images_found} image(s) — ${msg.url.split('/').slice(-3, -1).join('/')}`, 'pdp_done');
+                }
+              } else if (msg.phase === 'pdp_error') {
+                appendLog(`Erreur PDP: ${msg.error}`, 'pdp_error');
+              } else if (msg.phase === 'behavior') {
+                // Suppress verbose behavior logs
+              } else if (msg.done) {
+                const parts = [`${msg.new_count} nouvelles`];
+                if (msg.existing_count) parts.push(`${msg.existing_count} existantes`);
+                if (msg.duplicate_count) parts.push(`${msg.duplicate_count} doublons`);
+                appendLog(`Scan termine — ${msg.total} images total (${parts.join(', ')})`, 'done');
+                scanPercent.value = 100;
+                scanResult.value = msg;
+                scanDone.value = true;
+              } else if (msg.error) {
+                appendLog(`Erreur: ${msg.error}`, 'error');
+              }
+            } catch {}
+          }
+        }
+      } catch (e) {
+        appendLog(`Erreur reseau: ${e.message}`, 'error');
+      } finally {
+        scanRunning.value = false;
+      }
+    }
+
+    async function loadScannedInventory() {
+      try {
+        const res = await fetch('/api/inventory');
+        inventory.value = await res.json();
+        syncGroupIds();
+        currentTab.value = 'gallery';
+      } catch (e) {
+        console.error('Failed to reload inventory:', e);
+      }
+    }
+
     // Init
     async function init() {
       try {
         const [invRes, grpRes] = await Promise.all([
-          fetch('/api/inventory'),
+          fetch('/api/inventory').catch(() => null),
           fetch('/api/groups')
         ]);
-        inventory.value = await invRes.json();
+        if (invRes && invRes.ok) {
+          inventory.value = await invRes.json();
+        }
         const grpData = await grpRes.json();
         groups.value = grpData.groups || [];
-        syncGroupIds();
+        if (inventory.value) syncGroupIds();
       } catch (e) {
         console.error('Init failed:', e);
       } finally {
         loading.value = false;
       }
+
+      // Check if a scan is already running on the server
+      try {
+        const statusRes = await fetch('/api/scan/status');
+        const status = await statusRes.json();
+        if (status.running) {
+          scanRunning.value = true;
+          scanStatus.value = 'Scan en cours sur le serveur...';
+        }
+      } catch {}
     }
 
     // Watch modal open to focus input
@@ -1312,11 +1885,14 @@ createApp({
       groupShowAfter, groupSelectedIds,
       showExportImagesModal, exportFormat, exportProgress, exportPercent, exportFolder, exportImages, openInFinder,
       filteredImages, ungroupedCount, groupedCount, selectableFilteredCount, selectedGroupedCount,
-      selectAllFiltered, toggleSelect, createGroup, addToExistingGroup, deleteGroup, ungroupImage, ungroupSelected,
+      selectAllFiltered, toggleSelect, createGroup, addToExistingGroup, deleteGroup, ungroupImage, ungroupSelected, deleteSelectedImages,
       toggleGroup, toggleGroupImageSelect, removeFromGroup, getGroupName, getImageById,
-      addTransform, removeTransform, updateChain,
+      addTransform, removeTransform, moveTransform, updateChain,
+      centerPickerCursor, onCenterPickerMove, onCenterPickerLeave, onCenterPickerClick, onPickerImageLoad,
       buildTransformedUrl, handleAfterError,
-      saveGroups, exportGroup, exportAll, formatDate
+      saveGroups, exportGroup, exportAll, formatDate,
+      scanUrls, scanRunning, scanStatus, scanPercent, scanLog, scanResult, scanDone, scanLogEl,
+      startScan, clearScan, loadScannedInventory
     };
   }
 }).mount('#app');
