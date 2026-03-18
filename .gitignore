@@ -3,3 +3,4 @@ exports/
 inventory.json
 groups.json
 .DS_Store
+browsertrix-crawls/
