@@ -274,6 +274,14 @@ function getCropOverlay(group, imgId, cropImgNatural, cropOverlayVisible) {
   }
 }
 
+function buildTwoLayerUrl(image, layer1Chain, layer2Chain, width = 400) {
+  if (!image) return ''
+  const base = 'https://www.chanel.com/images/'
+  const l1 = layer1Chain ? `${layer1Chain}/` : ''
+  const l2 = layer2Chain ? `${layer2Chain}/` : ''
+  return `${base}t_one/${l1}${l2}q_auto:good,f_auto,fl_lossy/w_${width}/${image.filename}`
+}
+
 function handleAfterError(event, imgId) {
   if (event.target.dataset.fallback) return
   event.target.dataset.fallback = '1'
@@ -289,6 +297,7 @@ export function useCloudinary() {
     transformSummary,
     buildChain,
     buildTransformedUrl,
+    buildTwoLayerUrl,
     buildCropPreviewUrl,
     getCropOverlay,
     handleAfterError
