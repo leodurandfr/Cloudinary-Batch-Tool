@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { Plus, X, GripVertical } from 'lucide-vue-next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -8,35 +8,45 @@ import {
   DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import TransformPanel from './TransformPanel.vue'
-import { useGroups } from '@/composables/useGroups'
+import TransformPanel from '@/components/groupes/TransformPanel.vue'
+import { useDisplayRules } from '@/composables/useDisplayRules'
 import { useCloudinary } from '@/composables/useCloudinary'
 import { TRANSFORM_MENU_GROUPS } from '@/lib/transformMenuGroups'
 
 const props = defineProps({
-  group: { type: Object, required: true },
-  cropOverlayVisible: { type: Object, required: true }
+  slotKey: { type: String, required: true }
 })
 
-const { addTransform, removeTransform, reorderTransform } = useGroups()
+const { displayRules, addSlotTransform, removeSlotTransform, reorderSlotTransform, updateSlotChain } = useDisplayRules()
 const { transformLabel, transformSummary } = useCloudinary()
 
-const openBlock = ref(null) // index of expanded block
+// Always read live from the composable to avoid stale references
+const currentSlot = computed(() => displayRules.value?.slots?.[props.slotKey])
+
+const openBlock = ref(null)
 const dragIndex = ref(null)
 const dragOverIndex = ref(null)
+const cropOverlayVisible = reactive({})
+
+// Pseudo-group for TransformPanel compatibility — keyed by slotKey to avoid crop overlay collisions
+const pseudoGroupId = computed(() => `__slot__:${props.slotKey}`)
+
+function handleOnUpdate() {
+  updateSlotChain(props.slotKey)
+}
 
 function toggleBlock(index) {
   openBlock.value = openBlock.value === index ? null : index
 }
 
 function handleAdd(type) {
-  addTransform(props.group, type)
-  // Open the newly added block
-  openBlock.value = props.group.transformations.length - 1
+  addSlotTransform(props.slotKey, type)
+  if (!currentSlot.value) return
+  openBlock.value = currentSlot.value.transformations.length - 1
 }
 
 function handleRemove(index) {
-  removeTransform(props.group, index)
+  removeSlotTransform(props.slotKey, index)
   if (openBlock.value === index) openBlock.value = null
   else if (openBlock.value !== null && openBlock.value > index) openBlock.value--
 }
@@ -64,15 +74,14 @@ function onDrop(event, index) {
   event.preventDefault()
   if (dragIndex.value === null || dragIndex.value === index) return
   const from = dragIndex.value
-  reorderTransform(props.group, from, index)
-  // Track the open panel through the reorder
+  reorderSlotTransform(props.slotKey, from, index)
   if (openBlock.value !== null) {
     if (openBlock.value === from) {
       openBlock.value = index
     } else {
       let o = openBlock.value
-      if (from < o) o--       // removal before open shifts it down
-      if (index <= o) o++     // insertion at or before open shifts it up
+      if (from < o) o--
+      if (index <= o) o++
       openBlock.value = o
     }
   }
@@ -86,7 +95,7 @@ const MENU_GROUPS = TRANSFORM_MENU_GROUPS
 <template>
   <div class="space-y-3">
     <div class="flex items-center justify-between">
-      <h4 class="text-xs uppercase tracking-widest text-muted-foreground">Transformations</h4>
+      <h4 class="text-xs uppercase tracking-widest text-muted-foreground">{{ currentSlot?.label }}</h4>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="sm" class="h-7 text-xs gap-1">
@@ -114,8 +123,8 @@ const MENU_GROUPS = TRANSFORM_MENU_GROUPS
     </div>
 
     <!-- Chips row -->
-    <div v-if="group.transformations.length > 0" class="space-y-0">
-      <template v-for="(block, i) in group.transformations" :key="i">
+    <div v-if="currentSlot?.transformations?.length > 0" class="space-y-0">
+      <template v-for="(block, i) in currentSlot.transformations" :key="i">
         <div
           class="flex items-center gap-1 rounded-t-lg border border-border px-2 py-1.5 cursor-pointer transition-colors select-none"
           :class="{
@@ -153,19 +162,20 @@ const MENU_GROUPS = TRANSFORM_MENU_GROUPS
           v-if="openBlock === i"
           :block="block"
           :block-index="i"
-          :group="group"
+          :group="{ id: pseudoGroupId, image_ids: [], transformations: currentSlot.transformations, cloudinary_chain: currentSlot.cloudinary_chain }"
           :crop-overlay-visible="cropOverlayVisible"
+          :on-update="handleOnUpdate"
         />
       </template>
     </div>
 
     <div v-else class="text-xs text-muted-foreground py-2">
-      Aucune transformation. Cliquez sur "Ajouter" pour commencer.
+      Aucune transformation.
     </div>
 
     <!-- Chain preview -->
-    <div v-if="group.cloudinary_chain" class="rounded border border-border bg-secondary/50 px-3 py-2">
-      <code class="text-[11px] text-muted-foreground break-all">{{ group.cloudinary_chain }}</code>
+    <div v-if="currentSlot?.cloudinary_chain" class="rounded border border-border bg-secondary/50 px-3 py-2">
+      <code class="text-[11px] text-muted-foreground break-all">{{ currentSlot.cloudinary_chain }}</code>
     </div>
   </div>
 </template>

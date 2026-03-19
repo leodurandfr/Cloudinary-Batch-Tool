@@ -4,19 +4,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import GalerieTab from '@/views/GalerieTab.vue'
 import GroupesTab from '@/views/GroupesTab.vue'
 import ScannerTab from '@/views/ScannerTab.vue'
+import LayoutsTab from '@/views/LayoutsTab.vue'
 import { useInventory } from '@/composables/useInventory'
 import { useGroups } from '@/composables/useGroups'
 import { useScanner } from '@/composables/useScanner'
 import { useNavigation } from '@/composables/useNavigation'
+import { useReferences } from '@/composables/useReferences'
+import { useDisplayRules } from '@/composables/useDisplayRules'
 
 const { inventory, loading, loadInventory, filteredImages } = useInventory()
 const { groups, loadGroups, syncGroupIds } = useGroups()
 const { checkScanStatus } = useScanner()
 const { activeTab } = useNavigation()
+const { totalRefCount, loadRefsState } = useReferences()
+const { loadDisplayRules } = useDisplayRules()
 
 onMounted(async () => {
   try {
-    await Promise.all([loadInventory(), loadGroups()])
+    await Promise.all([loadInventory(), loadGroups(), loadRefsState(), loadDisplayRules()])
     syncGroupIds()
   } catch (e) {
     console.error('Init failed:', e)
@@ -52,6 +57,10 @@ onMounted(async () => {
           Groupes
           <span class="ml-1.5 shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px]">{{ groups.length }}</span>
         </TabsTrigger>
+        <TabsTrigger value="layouts" class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+          Layouts
+          <span class="ml-1.5 shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px]">{{ totalRefCount }}</span>
+        </TabsTrigger>
         <TabsTrigger value="scanner" class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
           Scanner
         </TabsTrigger>
@@ -63,6 +72,10 @@ onMounted(async () => {
 
       <TabsContent value="groupes" class="mt-0">
         <GroupesTab />
+      </TabsContent>
+
+      <TabsContent value="layouts" class="mt-0">
+        <LayoutsTab />
       </TabsContent>
 
       <TabsContent value="scanner" class="mt-0">

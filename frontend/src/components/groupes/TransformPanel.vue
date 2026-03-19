@@ -15,26 +15,28 @@ const props = defineProps({
   block: { type: Object, required: true },
   blockIndex: { type: Number, required: true },
   group: { type: Object, required: true },
-  cropOverlayVisible: { type: Object, required: true }
+  cropOverlayVisible: { type: Object, required: true },
+  onUpdate: { type: Function, default: null }
 })
 
 const { updateChain } = useGroups()
 
-function onUpdate() {
-  updateChain(props.group)
+function triggerUpdate() {
+  if (props.onUpdate) props.onUpdate()
+  else updateChain(props.group)
 }
 
 function nudgeCrop(dx, dy) {
   const step = 10
   props.block.params.x_offset = (props.block.params.x_offset || 0) + dx * step
   props.block.params.y_offset = (props.block.params.y_offset || 0) + dy * step
-  onUpdate()
+  triggerUpdate()
 }
 
 function resetNudge() {
   props.block.params.x_offset = 0
   props.block.params.y_offset = 0
-  onUpdate()
+  triggerUpdate()
 }
 
 function stepNumericInput(event, key) {
@@ -45,12 +47,12 @@ function stepNumericInput(event, key) {
   const step = event.shiftKey ? 10 : 1
   const dir = event.key === 'ArrowUp' ? 1 : -1
   props.block.params[key] = String(Math.max(0, val + step * dir))
-  onUpdate()
+  triggerUpdate()
 }
 
 function setGravity(g) {
   props.block.params.gravity = g
-  onUpdate()
+  triggerUpdate()
 }
 
 function setCropOverlay(val) {
@@ -68,7 +70,7 @@ function setCropOverlay(val) {
         :model-value="[block.params.tolerance ?? 50]"
         :min="0" :max="100" :step="1"
         class="flex-1"
-        @update:model-value="v => { block.params.tolerance = v[0]; onUpdate() }"
+        @update:model-value="v => { block.params.tolerance = v[0]; triggerUpdate() }"
       />
       <span class="text-xs text-muted-foreground w-8 text-right">{{ block.params.tolerance }}</span>
     </div>
@@ -77,7 +79,7 @@ function setCropOverlay(val) {
     <template v-if="block.type === 'crop'">
       <div class="flex items-center gap-3">
         <Label class="w-24 shrink-0 text-xs">Mode</Label>
-        <Select :model-value="block.params.mode" @update:model-value="v => { block.params.mode = v; onUpdate() }">
+        <Select :model-value="block.params.mode" @update:model-value="v => { block.params.mode = v; triggerUpdate() }">
           <SelectTrigger class="h-8 text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -103,7 +105,7 @@ function setCropOverlay(val) {
           :model-value="block.params.width"
           placeholder="ex: 800 ou iw"
           class="h-8 text-xs"
-          @update:model-value="v => { block.params.width = v; onUpdate() }"
+          @update:model-value="v => { block.params.width = v; triggerUpdate() }"
           @keydown="stepNumericInput($event, 'width')"
         />
       </div>
@@ -114,7 +116,7 @@ function setCropOverlay(val) {
           :model-value="block.params.height"
           placeholder="ex: 800 ou ih"
           class="h-8 text-xs"
-          @update:model-value="v => { block.params.height = v; onUpdate() }"
+          @update:model-value="v => { block.params.height = v; triggerUpdate() }"
           @keydown="stepNumericInput($event, 'height')"
         />
       </div>
@@ -125,7 +127,7 @@ function setCropOverlay(val) {
           :model-value="block.params.aspect_ratio"
           placeholder="ex: 1:1, 4:3"
           class="h-8 text-xs"
-          @update:model-value="v => { block.params.aspect_ratio = v; onUpdate() }"
+          @update:model-value="v => { block.params.aspect_ratio = v; triggerUpdate() }"
         />
       </div>
 
@@ -165,7 +167,7 @@ function setCropOverlay(val) {
     <template v-if="block.type === 'gradient_fade'">
       <div class="flex items-center gap-3">
         <Label class="w-24 shrink-0 text-xs">Direction</Label>
-        <Select :model-value="block.params.direction" @update:model-value="v => { block.params.direction = v; onUpdate() }">
+        <Select :model-value="block.params.direction" @update:model-value="v => { block.params.direction = v; triggerUpdate() }">
           <SelectTrigger class="h-8 text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -183,7 +185,7 @@ function setCropOverlay(val) {
           :model-value="[block.params.strength ?? 40]"
           :min="0" :max="100" :step="1"
           class="flex-1"
-          @update:model-value="v => { block.params.strength = v[0]; onUpdate() }"
+          @update:model-value="v => { block.params.strength = v[0]; triggerUpdate() }"
         />
         <span class="text-xs text-muted-foreground w-8 text-right">{{ block.params.strength }}</span>
       </div>
@@ -193,7 +195,7 @@ function setCropOverlay(val) {
           :model-value="block.params.y"
           placeholder="ex: 0.5"
           class="h-8 text-xs"
-          @update:model-value="v => { block.params.y = v; onUpdate() }"
+          @update:model-value="v => { block.params.y = v; triggerUpdate() }"
         />
       </div>
     </template>
@@ -206,7 +208,7 @@ function setCropOverlay(val) {
         :min="block.type === 'brightness' || block.type === 'contrast' ? -99 : -100"
         :max="100" :step="1"
         class="flex-1"
-        @update:model-value="v => { block.params.level = v[0]; onUpdate() }"
+        @update:model-value="v => { block.params.level = v[0]; triggerUpdate() }"
       />
       <span class="text-xs text-muted-foreground w-10 text-right">{{ block.params.level }}</span>
     </div>
@@ -218,7 +220,7 @@ function setCropOverlay(val) {
         :model-value="[block.params.strength ?? 100]"
         :min="1" :max="500" :step="1"
         class="flex-1"
-        @update:model-value="v => { block.params.strength = v[0]; onUpdate() }"
+        @update:model-value="v => { block.params.strength = v[0]; triggerUpdate() }"
       />
       <span class="text-xs text-muted-foreground w-10 text-right">{{ block.params.strength }}</span>
     </div>
@@ -226,7 +228,7 @@ function setCropOverlay(val) {
     <!-- Auto Improve -->
     <div v-if="block.type === 'auto_improve'" class="flex items-center gap-3">
       <Label class="w-24 shrink-0 text-xs">Mode</Label>
-      <Select :model-value="block.params.mode || '_auto'" @update:model-value="v => { block.params.mode = v === '_auto' ? '' : v; onUpdate() }">
+      <Select :model-value="block.params.mode || '_auto'" @update:model-value="v => { block.params.mode = v === '_auto' ? '' : v; triggerUpdate() }">
         <SelectTrigger class="h-8 text-xs">
           <SelectValue />
         </SelectTrigger>
@@ -242,7 +244,7 @@ function setCropOverlay(val) {
     <template v-if="block.type === 'rotation'">
       <div class="flex items-center gap-3">
         <Label class="w-24 shrink-0 text-xs">Angle</Label>
-        <Select :model-value="block.params.angle" @update:model-value="v => { block.params.angle = v; onUpdate() }">
+        <Select :model-value="block.params.angle" @update:model-value="v => { block.params.angle = v; triggerUpdate() }">
           <SelectTrigger class="h-8 text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -258,7 +260,7 @@ function setCropOverlay(val) {
       </div>
       <div class="flex items-center gap-3">
         <Label class="w-24 shrink-0 text-xs">Flip</Label>
-        <Select :model-value="block.params.flip || '_none'" @update:model-value="v => { block.params.flip = v === '_none' ? '' : v; onUpdate() }">
+        <Select :model-value="block.params.flip || '_none'" @update:model-value="v => { block.params.flip = v === '_none' ? '' : v; triggerUpdate() }">
           <SelectTrigger class="h-8 text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -279,7 +281,7 @@ function setCropOverlay(val) {
           :model-value="[block.params.width ?? 2]"
           :min="1" :max="50" :step="1"
           class="flex-1"
-          @update:model-value="v => { block.params.width = v[0]; onUpdate() }"
+          @update:model-value="v => { block.params.width = v[0]; triggerUpdate() }"
         />
         <span class="text-xs text-muted-foreground w-10 text-right">{{ block.params.width }}px</span>
       </div>
@@ -289,7 +291,7 @@ function setCropOverlay(val) {
           :model-value="block.params.color"
           placeholder="ex: black, FFFFFF"
           class="h-8 text-xs"
-          @update:model-value="v => { block.params.color = v; onUpdate() }"
+          @update:model-value="v => { block.params.color = v; triggerUpdate() }"
         />
       </div>
     </template>
@@ -297,7 +299,7 @@ function setCropOverlay(val) {
     <!-- Radius -->
     <div v-if="block.type === 'radius'" class="flex items-center gap-3">
       <Label class="w-24 shrink-0 text-xs">Rayon</Label>
-      <Select :model-value="block.params.value" @update:model-value="v => { block.params.value = v; onUpdate() }">
+      <Select :model-value="block.params.value" @update:model-value="v => { block.params.value = v; triggerUpdate() }">
         <SelectTrigger class="h-8 text-xs">
           <SelectValue />
         </SelectTrigger>
@@ -319,7 +321,7 @@ function setCropOverlay(val) {
         :model-value="[block.params.level ?? 100]"
         :min="0" :max="100" :step="1"
         class="flex-1"
-        @update:model-value="v => { block.params.level = v[0]; onUpdate() }"
+        @update:model-value="v => { block.params.level = v[0]; triggerUpdate() }"
       />
       <span class="text-xs text-muted-foreground w-10 text-right">{{ block.params.level }}%</span>
     </div>
@@ -327,7 +329,7 @@ function setCropOverlay(val) {
     <!-- Format -->
     <div v-if="block.type === 'format'" class="flex items-center gap-3">
       <Label class="w-24 shrink-0 text-xs">Format</Label>
-      <Select :model-value="block.params.value" @update:model-value="v => { block.params.value = v; onUpdate() }">
+      <Select :model-value="block.params.value" @update:model-value="v => { block.params.value = v; triggerUpdate() }">
         <SelectTrigger class="h-8 text-xs">
           <SelectValue />
         </SelectTrigger>
@@ -359,14 +361,14 @@ function setCropOverlay(val) {
         :model-value="block.params.prompt"
         placeholder="(optionnel) ex: studio white background"
         class="h-8 text-xs"
-        @update:model-value="v => { block.params.prompt = v; onUpdate() }"
+        @update:model-value="v => { block.params.prompt = v; triggerUpdate() }"
       />
     </div>
 
     <!-- Quality -->
     <div v-if="block.type === 'quality'" class="flex items-center gap-3">
       <Label class="w-24 shrink-0 text-xs">Qualité</Label>
-      <Select :model-value="block.params.level" @update:model-value="v => { block.params.level = v; onUpdate() }">
+      <Select :model-value="block.params.level" @update:model-value="v => { block.params.level = v; triggerUpdate() }">
         <SelectTrigger class="h-8 text-xs">
           <SelectValue />
         </SelectTrigger>
@@ -387,7 +389,7 @@ function setCropOverlay(val) {
         :model-value="block.params.color"
         placeholder="ex: white, FFFFFF, transparent"
         class="h-8 text-xs"
-        @update:model-value="v => { block.params.color = v; onUpdate() }"
+        @update:model-value="v => { block.params.color = v; triggerUpdate() }"
       />
     </div>
 
@@ -400,7 +402,7 @@ function setCropOverlay(val) {
           :model-value="[block.params.x ?? 0.5]"
           :min="0" :max="1" :step="0.01"
           class="flex-1"
-          @update:model-value="v => { block.params.x = v[0]; onUpdate() }"
+          @update:model-value="v => { block.params.x = v[0]; triggerUpdate() }"
         />
         <span class="text-xs text-muted-foreground w-10 text-right">{{ block.params.x }}</span>
       </div>
@@ -410,11 +412,11 @@ function setCropOverlay(val) {
           :model-value="[block.params.y ?? 0.5]"
           :min="0" :max="1" :step="0.01"
           class="flex-1"
-          @update:model-value="v => { block.params.y = v[0]; onUpdate() }"
+          @update:model-value="v => { block.params.y = v[0]; triggerUpdate() }"
         />
         <span class="text-xs text-muted-foreground w-10 text-right">{{ block.params.y }}</span>
       </div>
-      <Button variant="outline" size="sm" class="text-xs" @click="block.params.x = 0.5; block.params.y = 0.5; onUpdate()">
+      <Button variant="outline" size="sm" class="text-xs" @click="block.params.x = 0.5; block.params.y = 0.5; triggerUpdate()">
         Reset
       </Button>
       <div v-if="block.params.ref_width" class="text-[11px] text-muted-foreground">
@@ -433,7 +435,7 @@ function setCropOverlay(val) {
         :model-value="block.params.raw"
         placeholder="ex: e_sharpen:100"
         class="h-8 text-xs"
-        @update:model-value="v => { block.params.raw = v; onUpdate() }"
+        @update:model-value="v => { block.params.raw = v; triggerUpdate() }"
       />
     </div>
 
