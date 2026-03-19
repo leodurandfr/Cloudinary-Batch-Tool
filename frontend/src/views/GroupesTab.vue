@@ -1,9 +1,9 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
+import { PanelRightClose, PanelRightOpen } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import SelectionBar from '@/components/SelectionBar.vue'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription
@@ -24,6 +24,7 @@ const cropOverlayVisible = reactive({})
 const showDeleteConfirm = ref(false)
 const showExportModal = ref(false)
 const previewGridRef = ref(null)
+const showTransforms = ref(true)
 
 const selectedGroup = computed(() =>
   groups.value.find(g => g.id === selectedGroupId.value) || null
@@ -48,8 +49,8 @@ function handleDelete() {
 </script>
 
 <template>
-  <!-- 105px = header (57px) + tab bar (48px) -->
-  <div class="flex" style="height: calc(100vh - 105px)">
+  <!-- 48px = header with integrated tabs (h-12) -->
+  <div class="flex" style="height: calc(100vh - 48px)">
 
     <!-- Sidebar: Group list -->
     <aside class="w-[260px] min-w-[260px] border-r bg-card flex flex-col">
@@ -94,6 +95,22 @@ function handleDelete() {
 
     <!-- Main content: Selected group detail -->
     <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Toggle bar (always visible) -->
+      <div class="flex items-center justify-end border-b px-3 py-1.5">
+        <Button
+          v-if="selectedGroup"
+          variant="ghost"
+          size="sm"
+          class="h-7 text-xs gap-1.5 text-muted-foreground"
+          @click="showTransforms = !showTransforms"
+        >
+          Transformations
+          <PanelRightOpen v-if="!showTransforms" class="w-4 h-4" />
+          <PanelRightClose v-else class="w-4 h-4" />
+        </Button>
+      </div>
+
       <!-- No selection state -->
       <div v-if="!selectedGroup" class="flex-1 flex items-center justify-center text-muted-foreground">
         <div class="text-center">
@@ -130,14 +147,6 @@ function handleDelete() {
 
         <!-- Scrollable content -->
         <div class="flex-1 overflow-y-auto p-5 space-y-6">
-          <!-- Transform editor -->
-          <TransformEditor
-            :group="selectedGroup"
-            :crop-overlay-visible="cropOverlayVisible"
-          />
-
-          <Separator />
-
           <!-- Preview grid -->
           <PreviewGrid
             ref="previewGridRef"
@@ -157,6 +166,21 @@ function handleDelete() {
         />
       </template>
     </div>
+
+    <!-- Right sidebar: Transformations -->
+    <aside v-if="showTransforms && selectedGroup" class="w-[300px] min-w-[300px] border-l bg-card flex flex-col">
+      <div class="px-4 py-3 border-b">
+        <h3 class="text-xs uppercase tracking-widest text-muted-foreground">Transformations</h3>
+      </div>
+      <ScrollArea class="flex-1">
+        <div class="p-4">
+          <TransformEditor
+            :group="selectedGroup"
+            :crop-overlay-visible="cropOverlayVisible"
+          />
+        </div>
+      </ScrollArea>
+    </aside>
 
     <!-- Delete confirmation dialog -->
     <Dialog v-model:open="showDeleteConfirm">

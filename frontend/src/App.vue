@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted } from 'vue'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink
+} from '@/components/ui/navigation-menu'
 import GalerieTab from '@/views/GalerieTab.vue'
 import GroupesTab from '@/views/GroupesTab.vue'
 import ScannerTab from '@/views/ScannerTab.vue'
@@ -34,12 +36,35 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen bg-background text-foreground">
-    <header class="sticky top-0 z-50 flex items-center justify-between border-b bg-card px-6 py-4">
-      <h1 class="text-lg font-medium tracking-wide">CHANEL — Image Batch Tool</h1>
-      <span v-if="inventory?.stats" class="text-sm text-muted-foreground">
+    <header class="sticky top-0 z-50 flex items-center h-12 border-b bg-card px-6">
+      <h1 class="text-sm font-semibold tracking-wide shrink-0">GDS · IBT</h1>
+      <NavigationMenu class="flex-1 justify-center h-full">
+        <NavigationMenuList class="h-full gap-x-0">
+          <NavigationMenuItem v-for="tab in [
+            { key: 'galerie', label: 'Galerie', count: filteredImages.length },
+            { key: 'groupes', label: 'Groupes', count: groups.length },
+            { key: 'layouts', label: 'Layouts', count: totalRefCount },
+            { key: 'scanner', label: 'Scanner' }
+          ]" :key="tab.key">
+            <NavigationMenuLink
+              :active="activeTab === tab.key"
+              class="inline-flex items-center h-12 px-4 text-sm font-medium border-b-2 cursor-pointer transition-colors"
+              :class="activeTab === tab.key
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'"
+              @select.prevent
+              @click="activeTab = tab.key"
+            >
+              {{ tab.label }}
+              <span v-if="tab.count != null" class="ml-1.5 shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px]">{{ tab.count }}</span>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+      <span v-if="inventory?.stats" class="shrink-0 text-xs text-muted-foreground">
         {{ inventory.stats.processable }} images
-        · {{ Object.keys(inventory.stats.by_category).length }} catégories
-        · {{ groups.length }} groupes
+        · {{ Object.keys(inventory.stats.by_category).length }} cat.
+        · {{ groups.length }} grp.
       </span>
     </header>
 
@@ -47,40 +72,11 @@ onMounted(async () => {
       Chargement de l'inventaire...
     </div>
 
-    <Tabs v-else v-model="activeTab" class="w-full">
-      <TabsList class="flex w-full justify-start rounded-none border-b bg-card px-6 py-0">
-        <TabsTrigger value="galerie" class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-          Galerie
-          <span class="ml-1.5 shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px]">{{ filteredImages.length }}</span>
-        </TabsTrigger>
-        <TabsTrigger value="groupes" class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-          Groupes
-          <span class="ml-1.5 shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px]">{{ groups.length }}</span>
-        </TabsTrigger>
-        <TabsTrigger value="layouts" class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-          Layouts
-          <span class="ml-1.5 shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px]">{{ totalRefCount }}</span>
-        </TabsTrigger>
-        <TabsTrigger value="scanner" class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-          Scanner
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="galerie" class="mt-0">
-        <GalerieTab />
-      </TabsContent>
-
-      <TabsContent value="groupes" class="mt-0">
-        <GroupesTab />
-      </TabsContent>
-
-      <TabsContent value="layouts" class="mt-0">
-        <LayoutsTab />
-      </TabsContent>
-
-      <TabsContent value="scanner" class="mt-0">
-        <ScannerTab />
-      </TabsContent>
-    </Tabs>
+    <template v-else>
+      <GalerieTab v-show="activeTab === 'galerie'" />
+      <GroupesTab v-show="activeTab === 'groupes'" />
+      <LayoutsTab v-show="activeTab === 'layouts'" />
+      <ScannerTab v-show="activeTab === 'scanner'" />
+    </template>
   </div>
 </template>
