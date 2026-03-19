@@ -3,6 +3,8 @@ frontend/dist/
 exports/
 inventory.json
 groups.json
+display-rules.json
+refs-state.json
 *.bak
 .DS_Store
 browsertrix-crawls/

@@ -27,9 +27,6 @@ const FULL_PARAMS = 't_one/q_auto:good,f_auto,fl_lossy,dpr_1.1/w_1240';
 // Categories to scan
 const CATEGORIES = ['bagues', 'boucles-doreilles', 'bracelets', 'broches', 'colliers'];
 
-// Types to exclude from processing (portée images don't need transformation)
-const EXCLUDED_TYPES = ['portee', 'portee-1', 'portee-2', 'portee-3', 'portee-4', 'portee-5', 'portee-6', 'portee-7', 'portee-8'];
-
 function extractType(filename) {
   // Pattern: ...-packshot-{type}-{ref}-{id}.jpg
   const match = filename.match(/-packshot-(.+?)-(j\d+)-/i);
@@ -55,7 +52,6 @@ function scan() {
   const images = [];
   const stats = {
     total: 0,
-    excluded_portee: 0,
     by_category: {},
     by_type: {}
   };
@@ -78,13 +74,8 @@ function scan() {
 
       for (const filename of files) {
         const type = extractType(filename);
-        const isExcluded = EXCLUDED_TYPES.some(t => type === t);
 
         stats.total++;
-        if (isExcluded) {
-          stats.excluded_portee++;
-          continue;
-        }
 
         stats.by_category[category] = (stats.by_category[category] || 0) + 1;
         stats.by_type[type] = (stats.by_type[type] || 0) + 1;
@@ -112,7 +103,6 @@ function scan() {
 
   console.log(`\n✅ Inventory generated: ${OUTPUT_FILE}`);
   console.log(`   Total images scanned: ${stats.total}`);
-  console.log(`   Excluded (portée):    ${stats.excluded_portee}`);
   console.log(`   Processable:          ${stats.processable}`);
   console.log(`\n   By category:`);
   for (const [cat, count] of Object.entries(stats.by_category).sort((a, b) => b[1] - a[1])) {

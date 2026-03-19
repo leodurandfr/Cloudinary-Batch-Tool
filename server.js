@@ -18,6 +18,8 @@ const PORT = 3000;
 const IMAGES_ROOT = path.resolve(__dirname, '..', 'chanel_images');
 const INVENTORY_FILE = path.join(__dirname, 'inventory.json');
 const GROUPS_FILE = path.join(__dirname, 'groups.json');
+const DISPLAY_RULES_FILE = path.join(__dirname, 'display-rules.json');
+const REFS_STATE_FILE = path.join(__dirname, 'refs-state.json');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -44,19 +46,39 @@ app.post('/api/inventory', (req, res) => {
   res.json({ ok: true, count: req.body.images?.length || 0 });
 });
 
-// GET groups
-app.get('/api/groups', (req, res) => {
-  if (!fs.existsSync(GROUPS_FILE)) {
-    return res.json({ groups: [] });
-  }
-  res.sendFile(GROUPS_FILE);
-});
+// Helper: register GET/POST for a JSON-file-backed resource
+function jsonFileResource(route, file, defaultValue, countFn) {
+  app.get(route, (req, res) => {
+    if (!fs.existsSync(file)) return res.json(defaultValue);
+    res.sendFile(file);
+  });
+  app.post(route, (req, res) => {
+    fs.writeFileSync(file, JSON.stringify(req.body, null, 2));
+    res.json({ ok: true, saved: countFn(req.body) });
+  });
+}
 
-// POST groups (save)
-app.post('/api/groups', (req, res) => {
-  fs.writeFileSync(GROUPS_FILE, JSON.stringify(req.body, null, 2));
-  res.json({ ok: true, saved: req.body.groups?.length || 0 });
-});
+jsonFileResource('/api/groups', GROUPS_FILE,
+  { groups: [] },
+  body => body.groups?.length || 0
+);
+
+jsonFileResource('/api/display-rules', DISPLAY_RULES_FILE,
+  {
+    slots: {
+      cover: { label: 'Cover (1:1)', transformations: [], cloudinary_chain: '' },
+      zoom: { label: 'Zoom (8:5)', transformations: [], cloudinary_chain: '' },
+      gallery: { label: 'Galerie', transformations: [], cloudinary_chain: '' },
+      gallery_zoom: { label: 'Galerie Zoom', transformations: [], cloudinary_chain: '' }
+    }
+  },
+  body => Object.keys(body.slots || {}).length
+);
+
+jsonFileResource('/api/refs-state', REFS_STATE_FILE,
+  { has3d: {} },
+  body => Object.keys(body.has3d || {}).length
+);
 
 // POST export (generate final mapping)
 app.post('/api/export', (req, res) => {
