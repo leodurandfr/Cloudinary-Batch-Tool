@@ -128,8 +128,8 @@ watch(showCreateGroupModal, (val) => {
 </script>
 
 <template>
-  <!-- 105px = header (57px) + tab bar (48px) -->
-  <div class="flex" style="height: calc(100vh - 105px)">
+  <!-- 48px = header with integrated tabs (h-12) -->
+  <div class="flex" style="height: calc(100vh - 48px)">
     <!-- Sidebar -->
     <aside class="w-[260px] min-w-[260px] border-r bg-card">
       <ScrollArea class="h-full">

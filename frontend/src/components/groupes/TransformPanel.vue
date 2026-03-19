@@ -398,23 +398,23 @@ function setCropOverlay(val) {
       <CenterPicker :group="group" :block-index="blockIndex" />
       <div class="flex items-center gap-3">
         <Label class="w-16 shrink-0 text-xs">X</Label>
-        <Slider
-          :model-value="[block.params.x ?? 0.5]"
-          :min="0" :max="1" :step="0.01"
-          class="flex-1"
-          @update:model-value="v => { block.params.x = v[0]; triggerUpdate() }"
+        <Input
+          type="number"
+          :model-value="block.params.x ?? 0.5"
+          min="0" max="1" step="0.001"
+          class="flex-1 h-8 text-xs"
+          @update:model-value="v => { block.params.x = Math.max(0, Math.min(1, parseFloat(v) || 0)); triggerUpdate() }"
         />
-        <span class="text-xs text-muted-foreground w-10 text-right">{{ block.params.x }}</span>
       </div>
       <div class="flex items-center gap-3">
         <Label class="w-16 shrink-0 text-xs">Y</Label>
-        <Slider
-          :model-value="[block.params.y ?? 0.5]"
-          :min="0" :max="1" :step="0.01"
-          class="flex-1"
-          @update:model-value="v => { block.params.y = v[0]; triggerUpdate() }"
+        <Input
+          type="number"
+          :model-value="block.params.y ?? 0.5"
+          min="0" max="1" step="0.001"
+          class="flex-1 h-8 text-xs"
+          @update:model-value="v => { block.params.y = Math.max(0, Math.min(1, parseFloat(v) || 0)); triggerUpdate() }"
         />
-        <span class="text-xs text-muted-foreground w-10 text-right">{{ block.params.y }}</span>
       </div>
       <Button variant="outline" size="sm" class="text-xs" @click="block.params.x = 0.5; block.params.y = 0.5; triggerUpdate()">
         Reset

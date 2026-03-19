@@ -26,8 +26,8 @@ function onMouseLeave() {
 
 function onClick(event) {
   const rect = event.currentTarget.getBoundingClientRect()
-  const x = Math.round(((event.clientX - rect.left) / rect.width) * 100) / 100
-  const y = Math.round(((event.clientY - rect.top) / rect.height) * 100) / 100
+  const x = Math.round(((event.clientX - rect.left) / rect.width) * 1000) / 1000
+  const y = Math.round(((event.clientY - rect.top) / rect.height) * 1000) / 1000
   block.value.params.x = Math.max(0, Math.min(1, x))
   block.value.params.y = Math.max(0, Math.min(1, y))
   updateChain(props.group)

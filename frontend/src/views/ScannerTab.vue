@@ -37,7 +37,8 @@ async function loadScannedInventory() {
 </script>
 
 <template>
-  <div class="overflow-y-auto" style="height: calc(100vh - 105px)">
+  <!-- 48px = header with integrated tabs (h-12) -->
+  <div class="overflow-y-auto" style="height: calc(100vh - 48px)">
     <div class="mx-auto max-w-[900px] px-5 py-6">
       <!-- Header -->
       <div class="mb-5">
@@ -108,7 +109,7 @@ https://www.chanel.com/fr/joaillerie/boucles-doreilles/c/3x1x3/"
               entry.phase === 'plp' && 'font-semibold text-primary',
               entry.phase === 'plp_done' && 'text-primary',
               entry.phase === 'pdp_done' && 'text-foreground',
-              entry.phase === 'done' && 'font-semibold text-[hsl(var(--success))]',
+              entry.phase === 'done' && 'font-semibold text-emerald-600',
               (entry.phase === 'error' || entry.phase === 'plp_error' || entry.phase === 'pdp_error') && 'text-destructive',
               !['plp', 'plp_done', 'pdp_done', 'done', 'error', 'plp_error', 'pdp_error'].includes(entry.phase) && 'text-muted-foreground'
             ]"
@@ -132,7 +133,7 @@ https://www.chanel.com/fr/joaillerie/boucles-doreilles/c/3x1x3/"
 
           <Card class="min-w-[140px] flex-1">
             <CardContent class="p-4 text-center">
-              <div class="text-2xl font-semibold text-[hsl(var(--success))]">{{ scanResult.new_count }}</div>
+              <div class="text-2xl font-semibold text-emerald-600">{{ scanResult.new_count }}</div>
               <div class="mt-1 text-xs text-muted-foreground">Nouvelles</div>
             </CardContent>
           </Card>

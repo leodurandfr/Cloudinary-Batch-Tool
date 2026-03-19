@@ -1,7 +1,10 @@
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { Sun, Moon } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
 import {
-  NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink
+  NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink,
+  navigationMenuTriggerStyle
 } from '@/components/ui/navigation-menu'
 import GalerieTab from '@/views/GalerieTab.vue'
 import GroupesTab from '@/views/GroupesTab.vue'
@@ -21,6 +24,17 @@ const { activeTab } = useNavigation()
 const { totalRefCount, loadRefsState } = useReferences()
 const { loadDisplayRules } = useDisplayRules()
 
+const isDark = ref(localStorage.getItem('theme') === 'dark')
+
+function toggleTheme() {
+  isDark.value = !isDark.value
+  document.documentElement.classList.toggle('dark', isDark.value)
+  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
+}
+
+// Apply saved theme on load
+document.documentElement.classList.toggle('dark', isDark.value)
+
 onMounted(async () => {
   try {
     await Promise.all([loadInventory(), loadGroups(), loadRefsState(), loadDisplayRules()])
@@ -36,10 +50,10 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen bg-background text-foreground">
-    <header class="sticky top-0 z-50 flex items-center h-12 border-b bg-card px-6">
-      <h1 class="text-sm font-semibold tracking-wide shrink-0">GDS · IBT</h1>
-      <NavigationMenu class="flex-1 justify-center h-full">
-        <NavigationMenuList class="h-full gap-x-0">
+    <header class="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center h-12 border-b bg-card px-6">
+      <h1 class="text-sm font-semibold tracking-wide">GDS · IBT</h1>
+      <NavigationMenu>
+        <NavigationMenuList>
           <NavigationMenuItem v-for="tab in [
             { key: 'galerie', label: 'Galerie', count: filteredImages.length },
             { key: 'groupes', label: 'Groupes', count: groups.length },
@@ -48,10 +62,9 @@ onMounted(async () => {
           ]" :key="tab.key">
             <NavigationMenuLink
               :active="activeTab === tab.key"
-              class="inline-flex items-center h-12 px-4 text-sm font-medium border-b-2 cursor-pointer transition-colors"
-              :class="activeTab === tab.key
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'"
+              :class="navigationMenuTriggerStyle()"
+              class="cursor-pointer"
+              :style="activeTab !== tab.key ? 'color: hsl(var(--muted-foreground))' : ''"
               @select.prevent
               @click="activeTab = tab.key"
             >
@@ -61,11 +74,12 @@ onMounted(async () => {
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
-      <span v-if="inventory?.stats" class="shrink-0 text-xs text-muted-foreground">
-        {{ inventory.stats.processable }} images
-        · {{ Object.keys(inventory.stats.by_category).length }} cat.
-        · {{ groups.length }} grp.
-      </span>
+      <div class="flex justify-end">
+        <Button variant="ghost" size="icon" class="h-8 w-8" @click="toggleTheme">
+          <Sun v-if="isDark" class="h-4 w-4" />
+          <Moon v-else class="h-4 w-4" />
+        </Button>
+      </div>
     </header>
 
     <div v-if="loading" class="flex items-center justify-center p-20 text-muted-foreground">
