@@ -7,10 +7,12 @@ import ScannerTab from '@/views/ScannerTab.vue'
 import { useInventory } from '@/composables/useInventory'
 import { useGroups } from '@/composables/useGroups'
 import { useScanner } from '@/composables/useScanner'
+import { useNavigation } from '@/composables/useNavigation'
 
 const { inventory, loading, loadInventory, filteredImages } = useInventory()
 const { groups, loadGroups, syncGroupIds } = useGroups()
 const { checkScanStatus } = useScanner()
+const { activeTab } = useNavigation()
 
 onMounted(async () => {
   try {
@@ -40,7 +42,7 @@ onMounted(async () => {
       Chargement de l'inventaire...
     </div>
 
-    <Tabs v-else default-value="galerie" class="w-full">
+    <Tabs v-else v-model="activeTab" class="w-full">
       <TabsList class="flex w-full justify-start rounded-none border-b bg-card px-6 py-0">
         <TabsTrigger value="galerie" class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
           Galerie

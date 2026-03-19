@@ -4,37 +4,66 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Internal tool for batch-managing Chanel jewelry product images via Cloudinary. It scans local image directories, builds an inventory, and provides a web UI to group images, preview Cloudinary transformations, and export transformed images.
+Internal tool for batch-managing Chanel jewelry product images via Cloudinary. It scans Chanel PLPs via Playwright, builds an inventory of Cloudinary image URLs, and provides a web UI to group images, preview Cloudinary transformations, and export transformed images.
 
 ## Commands
 
 - **Start the server:** `npm start` (or `node server.js`) — serves the app at http://localhost:3000
-- **Generate inventory:** `node scan.js` — scans image directories and writes `inventory.json` (must run before using the app)
-- **Install deps:** `npm install`
+- **Dev mode:** `npm run dev` — starts Vite dev server with HMR, proxies API to Express on :3000
+- **Build frontend:** `npm run build` — builds the Vue 3 SPA to `frontend/dist/`
+- **Generate inventory:** `node scan.js` — scans local image directories and writes `inventory.json`
+- **Install deps:** `npm install` — installs backend deps + frontend deps (via postinstall)
 
 No test suite or linter is configured.
 
 ## Architecture
 
-**Two-part app: Node.js backend + Vue 3 SPA frontend (single file).**
+**Two-part app: Node.js backend + Vue 3 SPA frontend (Vite + shadcn-vue).**
 
-- `scan.js` — CLI script that walks `{category}/{reference}/{filename}.jpg` directories one level up from the project root, extracts metadata (type, ref, Cloudinary ID) from filenames, and writes `inventory.json`. Categories: bagues, boucles-doreilles, bracelets, broches, colliers. Excludes "portée" image types.
-- `server.js` — Express 5 server with REST API:
-  - `GET /api/inventory` — returns `inventory.json`
+### Backend
+
+- `server.js` — Express 5 server, serves the SPA from `frontend/dist/` and exposes REST API:
+  - `GET/POST /api/inventory` — read/write `inventory.json`
   - `GET/POST /api/groups` — read/write `groups.json` (image groupings)
+  - `POST /api/scan` — launches Playwright scraper, streams NDJSON progress
+  - `GET /api/scan/status` — returns `{ running: boolean }`
   - `POST /api/export` — saves group export as timestamped JSON to `exports/`
-  - `POST /api/export-images` — downloads transformed images from Cloudinary URLs, streams NDJSON progress
+  - `POST /api/export-images` — downloads transformed images from Cloudinary, streams NDJSON progress
   - `POST /api/open-folder` — opens export folder in macOS Finder
-- `index.html` — Self-contained Vue 3 SPA (CDN-loaded Vue, inline CSS/JS). Handles image browsing with filters (category, type, ref), multi-select, group creation, Cloudinary transformation preview (before/after), and batch export.
+  - `GET /images/*` — serves local images from `../chanel_images/`
+- `scraper.js` — Playwright-based two-phase scraper (PLP discovery → PDP image extraction), merges results into `inventory.json`
+- `scan.js` — CLI script that walks local `{category}/{reference}/{filename}.jpg` directories and writes `inventory.json`
+
+### Frontend (`frontend/`)
+
+Vue 3 SPA built with Vite, Tailwind CSS, and shadcn-vue (reka-ui primitives). Dark theme with gold accent (`--primary: 38 46% 60%`).
+
+- **Views** (`frontend/src/views/`):
+  - `GalerieTab.vue` — image browsing with filters (category, type, state, ref), multi-select, group creation
+  - `GroupesTab.vue` — group management, transformation editor (drag-and-drop chips), before/after preview, export
+  - `ScannerTab.vue` — PLP scanner UI with real-time NDJSON log streaming, progress bar, result stats
+- **Composables** (`frontend/src/composables/`):
+  - `useInventory.js` — inventory state, filtering, CRUD (module-level singleton)
+  - `useGroups.js` — group CRUD, transform management, export (module-level singleton)
+  - `useScanner.js` — scan state, NDJSON stream parsing, progress tracking (module-level singleton)
+  - `useCloudinary.js` — URL building, transform chain, preview helpers
+  - `useNavigation.js` — shared `activeTab` ref for programmatic tab switching
+- **UI components** (`frontend/src/components/ui/`): shadcn-vue components (accordion, badge, button, card, checkbox, dialog, dropdown-menu, input, label, progress, scroll-area, select, separator, slider, switch, tabs, tooltip)
+- **Feature components** (`frontend/src/components/groupes/`): TransformEditor, PreviewGrid, ExportModal
+
+### Dev setup
+
+- `npm run dev` starts Vite on port 5173 with proxy to Express on port 3000 (configured in `frontend/vite.config.js`)
+- `npm run build` outputs to `frontend/dist/`, which Express serves in production
 
 ## Key Data Flow
 
-1. Local images live in `../` relative to the project (e.g., `../bagues/J12345/filename.jpg`)
-2. `scan.js` builds Cloudinary URLs from filenames using `https://www.chanel.com/images/` base + transformation params
-3. The web UI displays thumbnails via Cloudinary URLs, allows grouping, and can download transformed versions
+1. `scraper.js` crawls Chanel PLPs → discovers PDP links → intercepts Cloudinary image URLs → merges into `inventory.json`
+2. Alternatively, `scan.js` walks local image directories to build `inventory.json`
+3. The web UI displays thumbnails via Cloudinary URLs, allows grouping, transformation preview, and batch export
 
 ## Data Files (gitignored)
 
-- `inventory.json` — generated by `scan.js`, consumed by the frontend
+- `inventory.json` — generated by `scan.js` or scraper, consumed by the frontend
 - `groups.json` — persisted image groups (user-created via UI)
 - `exports/` — exported JSON mappings and downloaded images

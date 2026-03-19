@@ -1,4 +1,4 @@
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 
 const scanUrls = ref('')
 const scanRunning = ref(false)
@@ -7,7 +7,6 @@ const scanPercent = ref(0)
 const scanLog = ref([])
 const scanResult = ref(null)
 const scanDone = ref(false)
-const scanLogEl = ref(null)
 
 function clearScan() {
   scanLog.value = []
@@ -19,9 +18,6 @@ function clearScan() {
 
 function appendLog(text, phase = 'info') {
   scanLog.value.push({ text, phase })
-  nextTick(() => {
-    if (scanLogEl.value) scanLogEl.value.scrollTop = scanLogEl.value.scrollHeight
-  })
 }
 
 async function startScan() {
@@ -128,7 +124,6 @@ export function useScanner() {
     scanLog,
     scanResult,
     scanDone,
-    scanLogEl,
     startScan,
     clearScan,
     checkScanStatus

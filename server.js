@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * server.js — Minimal Express server for the Chanel Image Batch Tool
+ * server.js — Express server for the Chanel Image Batch Tool
  *
- * - Serves the app (index.html)
+ * - Serves the Vue 3 SPA from frontend/dist/
  * - Serves local images for "before" preview
- * - REST endpoints for inventory and groups persistence
+ * - REST endpoints for inventory, groups, scanning, and export
  *
  * Usage: node server.js
  */
@@ -169,17 +169,15 @@ app.post('/api/open-folder', (req, res) => {
   res.json({ ok: true, path: fullPath });
 });
 
-// Serve frontend build if available, otherwise fall back to legacy index.html
+// Serve Vue 3 SPA from frontend/dist/
 const FRONTEND_DIST = path.join(__dirname, 'frontend', 'dist');
-if (fs.existsSync(FRONTEND_DIST)) {
-  app.use(express.static(FRONTEND_DIST));
-  app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
-  app.get('/{*path}', (req, res) => {
-    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
-  });
-} else {
-  app.use(express.static(__dirname));
+if (!fs.existsSync(path.join(FRONTEND_DIST, 'index.html'))) {
+  console.warn('\n⚠️  frontend/dist/ not found. Run "npm run build" first.\n');
 }
+app.use(express.static(FRONTEND_DIST));
+app.get('/{*path}', (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+});
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Chanel Image Batch Tool`);
