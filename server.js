@@ -173,6 +173,7 @@ app.post('/api/open-folder', (req, res) => {
 const FRONTEND_DIST = path.join(__dirname, 'frontend', 'dist');
 if (fs.existsSync(FRONTEND_DIST)) {
   app.use(express.static(FRONTEND_DIST));
+  app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
   app.get('/{*path}', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
   });

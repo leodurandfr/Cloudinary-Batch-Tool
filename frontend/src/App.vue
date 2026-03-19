@@ -13,7 +13,7 @@ import ScannerTab from '@/views/ScannerTab.vue'
     </header>
 
     <Tabs default-value="galerie" class="w-full">
-      <TabsList class="w-full justify-start rounded-none border-b bg-card px-6">
+      <TabsList class="flex w-full justify-start rounded-none border-b bg-card px-6">
         <TabsTrigger value="galerie" class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary">
           Galerie
         </TabsTrigger>
