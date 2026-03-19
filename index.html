@@ -311,10 +311,82 @@
     }
 
     .add-transform-btn {
-      display: flex;
-      gap: 8px;
+      position: relative;
       margin-top: 12px;
-      flex-wrap: wrap;
+    }
+    .add-transform-dropdown-toggle {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      color: var(--text-muted);
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: left;
+    }
+    .add-transform-dropdown-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .add-transform-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 4px;
+      max-height: 420px;
+      overflow-y: auto;
+      z-index: 50;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .add-transform-menu-group {
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .add-transform-menu-group:last-child { border-bottom: none; }
+    .add-transform-menu-group-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 16px 4px;
+      user-select: none;
+    }
+    .add-transform-menu-item {
+      padding: 8px 16px 8px 28px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .add-transform-menu-item:hover {
+      background: var(--surface-2);
+      color: var(--accent);
+    }
+
+    .range-with-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      max-width: 280px;
+    }
+    .range-with-value input[type="range"] {
+      flex: 1;
+      max-width: none;
+      accent-color: var(--accent);
+    }
+    .range-with-value .range-val {
+      font-size: 12px;
+      color: var(--accent);
+      min-width: 36px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
 
     .url-preview {
@@ -332,9 +404,32 @@
     /* Preview grid */
     .preview-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 16px;
     }
+    /* Column control */
+    .col-control {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 12px;
+    }
+    .col-btn {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+      line-height: 1;
+    }
+    .col-btn:hover { background: var(--accent); color: var(--bg); }
+    .col-count { font-size: 11px; color: var(--text-muted); min-width: 14px; text-align: center; }
     .preview-item {
       background: var(--surface);
       border-radius: var(--radius);
@@ -444,6 +539,24 @@
       display: none;
     }
     .image-card.grouped:hover .ungroup-btn { display: block; }
+
+    .preview-item .group-remove-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+      z-index: 3;
+    }
+    .preview-item:hover .group-remove-btn { display: block; }
 
     /* Scanner tab */
     .scanner-layout {
@@ -622,6 +735,106 @@
       border: 2px solid var(--accent);
       border-radius: 50%;
     }
+
+    /* Gravity grid 3x3 */
+    .gravity-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      width: 72px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .gravity-cell {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: var(--surface);
+      transition: background 0.15s;
+      position: relative;
+    }
+    .gravity-cell:hover { background: var(--surface-2); }
+    .gravity-cell.active { background: var(--accent); }
+    .gravity-cell::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+    .gravity-cell.active::after { background: var(--bg); }
+    .gravity-cell.special { font-size: 10px; color: var(--text-muted); }
+    .gravity-cell.special::after { display: none; }
+    .gravity-cell.special.active { color: var(--bg); }
+    .gravity-row-label { font-size: 10px; color: var(--text-muted); margin-left: 4px; }
+
+    /* Crop overlay on preview images */
+    .crop-overlay-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .crop-overlay-container img {
+      display: block;
+      width: 100%;
+    }
+    .crop-overlay-dim {
+      position: absolute;
+      background: rgba(0,0,0,0.55);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .crop-overlay-border {
+      position: absolute;
+      border: 1.5px dashed var(--accent);
+      pointer-events: none;
+      z-index: 3;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+    }
+
+    /* Nudge buttons */
+    .nudge-controls {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .nudge-btn {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+      transition: background 0.15s;
+    }
+    .nudge-btn:hover { background: var(--accent); color: var(--bg); }
+    .nudge-center-btn {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 9px;
+      padding: 0;
+    }
+    .nudge-center-btn:hover { background: var(--accent); color: var(--bg); }
+
     .center-coords {
       display: flex;
       gap: 16px;
@@ -785,7 +998,7 @@
                       <button :disabled="bi === 0" @click="moveTransform(group, bi, -1)" title="Monter">▲</button>
                       <button :disabled="bi === group.transformations.length - 1" @click="moveTransform(group, bi, 1)" title="Descendre">▼</button>
                     </div>
-                    <span style="flex: 1;">{{ block.type }}</span>
+                    <span style="flex: 1;">{{ transformLabel(block.type) }}</span>
                     <button class="btn btn-sm btn-danger" @click="removeTransform(group, bi)">×</button>
                   </div>
 
@@ -809,33 +1022,66 @@
                         <option value="auto">auto</option>
                       </select>
                     </div>
-                    <div class="param-row">
+                    <div class="param-row" style="align-items: start;">
                       <label>Gravity</label>
-                      <select v-model="block.params.gravity" @change="updateChain(group)">
-                        <option value="">auto</option>
-                        <option value="center">center</option>
-                        <option value="north">north</option>
-                        <option value="south">south</option>
-                        <option value="east">east</option>
-                        <option value="west">west</option>
-                        <option value="face">face</option>
-                        <option value="auto">auto (smart)</option>
-                      </select>
+                      <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="gravity-grid">
+                          <div v-for="g in ['north_west','north','north_east','west','center','east','south_west','south','south_east']"
+                               :key="g" class="gravity-cell" :class="{ active: block.params.gravity === g }"
+                               :title="g" @click="block.params.gravity = g; updateChain(group)"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                          <div class="gravity-cell special" :class="{ active: block.params.gravity === 'face' }"
+                               style="width: auto; height: auto; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 11px;"
+                               @click="block.params.gravity = 'face'; updateChain(group)">face</div>
+                          <div class="gravity-cell special" :class="{ active: block.params.gravity === 'auto' }"
+                               style="width: auto; height: auto; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 11px;"
+                               @click="block.params.gravity = 'auto'; updateChain(group)">auto</div>
+                        </div>
+                      </div>
                     </div>
                     <div class="param-row">
                       <label>Width</label>
                       <input type="text" v-model="block.params.width" placeholder="ex: 800 ou iw"
-                             @input="updateChain(group)">
+                             @input="updateChain(group)"
+                             @keydown="stepNumericInput($event, block.params, 'width', group)">
                     </div>
                     <div class="param-row">
                       <label>Height</label>
                       <input type="text" v-model="block.params.height" placeholder="ex: 800 ou ih"
-                             @input="updateChain(group)">
+                             @input="updateChain(group)"
+                             @keydown="stepNumericInput($event, block.params, 'height', group)">
                     </div>
                     <div class="param-row">
                       <label>Aspect ratio</label>
                       <input type="text" v-model="block.params.aspect_ratio" placeholder="ex: 1:1, 4:3"
                              @input="updateChain(group)">
+                    </div>
+                    <div class="param-row" style="align-items: start;">
+                      <label>Décalage</label>
+                      <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <div class="nudge-controls">
+                          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;">
+                            <div style="width:26px;"></div>
+                            <button class="nudge-btn" title="Décaler vers le haut" @click="nudgeCrop(block, group, 0, -1)">↑</button>
+                            <div style="width:26px;"></div>
+                            <button class="nudge-btn" title="Décaler vers la gauche" @click="nudgeCrop(block, group, -1, 0)">←</button>
+                            <button class="nudge-center-btn" title="Réinitialiser" @click="block.params.x_offset = 0; block.params.y_offset = 0; updateChain(group)">⊙</button>
+                            <button class="nudge-btn" title="Décaler vers la droite" @click="nudgeCrop(block, group, 1, 0)">→</button>
+                            <div style="width:26px;"></div>
+                            <button class="nudge-btn" title="Décaler vers le bas" @click="nudgeCrop(block, group, 0, 1)">↓</button>
+                            <div style="width:26px;"></div>
+                          </div>
+                          <div style="margin-left: 8px; font-size: 11px; color: var(--text-muted);">
+                            <div>X: {{ block.params.x_offset || 0 }}px</div>
+                            <div>Y: {{ block.params.y_offset || 0 }}px</div>
+                            <div style="margin-top: 2px; font-size: 10px;">Pas : 10px</div>
+                          </div>
+                        </div>
+                        <label style="font-size: 11px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-muted);">
+                          <input type="checkbox" v-model="cropOverlayVisible[group.id]" style="accent-color: var(--accent);"> Aperçu du crop sur l'image
+                        </label>
+                      </div>
                     </div>
                   </template>
 
@@ -866,6 +1112,150 @@
                   <div v-if="block.type === 'custom'" class="param-row">
                     <label>Params</label>
                     <input type="text" v-model="block.params.raw" placeholder="ex: e_sharpen:100"
+                           style="max-width: 400px;" @input="updateChain(group)">
+                  </div>
+
+                  <!-- Brightness -->
+                  <div v-if="block.type === 'brightness'" class="param-row">
+                    <label>Niveau</label>
+                    <div class="range-with-value">
+                      <input type="range" v-model.number="block.params.level" min="-99" max="100" @input="updateChain(group)">
+                      <span class="range-val">{{ block.params.level }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Contrast -->
+                  <div v-if="block.type === 'contrast'" class="param-row">
+                    <label>Niveau</label>
+                    <div class="range-with-value">
+                      <input type="range" v-model.number="block.params.level" min="-99" max="100" @input="updateChain(group)">
+                      <span class="range-val">{{ block.params.level }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Saturation -->
+                  <div v-if="block.type === 'saturation'" class="param-row">
+                    <label>Niveau</label>
+                    <div class="range-with-value">
+                      <input type="range" v-model.number="block.params.level" min="-100" max="100" @input="updateChain(group)">
+                      <span class="range-val">{{ block.params.level }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Vibrance -->
+                  <div v-if="block.type === 'vibrance'" class="param-row">
+                    <label>Niveau</label>
+                    <div class="range-with-value">
+                      <input type="range" v-model.number="block.params.level" min="-100" max="100" @input="updateChain(group)">
+                      <span class="range-val">{{ block.params.level }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Sharpen -->
+                  <div v-if="block.type === 'sharpen'" class="param-row">
+                    <label>Intensité</label>
+                    <div class="range-with-value">
+                      <input type="range" v-model.number="block.params.strength" min="1" max="500" @input="updateChain(group)">
+                      <span class="range-val">{{ block.params.strength }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Auto Improve (no params needed) -->
+                  <div v-if="block.type === 'auto_improve'" class="param-row">
+                    <label>Mode</label>
+                    <select v-model="block.params.mode" @change="updateChain(group)">
+                      <option value="">auto</option>
+                      <option value="outdoor">outdoor</option>
+                      <option value="indoor">indoor</option>
+                    </select>
+                  </div>
+
+                  <!-- Rotation -->
+                  <template v-if="block.type === 'rotation'">
+                    <div class="param-row">
+                      <label>Angle</label>
+                      <select v-model="block.params.angle" @change="updateChain(group)">
+                        <option value="0">0°</option>
+                        <option value="90">90°</option>
+                        <option value="180">180°</option>
+                        <option value="270">270° (-90°)</option>
+                        <option value="auto_right">Auto droite</option>
+                        <option value="auto_left">Auto gauche</option>
+                      </select>
+                    </div>
+                    <div class="param-row">
+                      <label>Flip</label>
+                      <select v-model="block.params.flip" @change="updateChain(group)">
+                        <option value="">Aucun</option>
+                        <option value="hflip">Horizontal</option>
+                        <option value="vflip">Vertical</option>
+                      </select>
+                    </div>
+                  </template>
+
+                  <!-- Border -->
+                  <template v-if="block.type === 'border'">
+                    <div class="param-row">
+                      <label>Épaisseur</label>
+                      <input type="number" v-model.number="block.params.width" min="1" max="50"
+                             @input="updateChain(group)">
+                    </div>
+                    <div class="param-row">
+                      <label>Couleur</label>
+                      <input type="text" v-model="block.params.color" placeholder="ex: black, FFFFFF"
+                             @input="updateChain(group)">
+                    </div>
+                  </template>
+
+                  <!-- Radius -->
+                  <div v-if="block.type === 'radius'" class="param-row">
+                    <label>Rayon</label>
+                    <select v-model="block.params.value" @change="updateChain(group)">
+                      <option value="max">Cercle (max)</option>
+                      <option value="10">10px</option>
+                      <option value="20">20px</option>
+                      <option value="30">30px</option>
+                      <option value="40">40px</option>
+                      <option value="50">50px</option>
+                    </select>
+                  </div>
+
+                  <!-- Opacity -->
+                  <div v-if="block.type === 'opacity'" class="param-row">
+                    <label>Opacité</label>
+                    <div class="range-with-value">
+                      <input type="range" v-model.number="block.params.level" min="0" max="100" @input="updateChain(group)">
+                      <span class="range-val">{{ block.params.level }}%</span>
+                    </div>
+                  </div>
+
+                  <!-- Format -->
+                  <div v-if="block.type === 'format'" class="param-row">
+                    <label>Format</label>
+                    <select v-model="block.params.value" @change="updateChain(group)">
+                      <option value="auto">auto</option>
+                      <option value="jpg">JPG</option>
+                      <option value="png">PNG</option>
+                      <option value="webp">WebP</option>
+                      <option value="avif">AVIF</option>
+                      <option value="tiff">TIFF</option>
+                    </select>
+                  </div>
+
+                  <!-- BG Removal (no configurable params) -->
+                  <div v-if="block.type === 'bgremoval'" class="param-row">
+                    <span style="font-size: 12px; color: var(--text-muted);">Suppression automatique du fond (IA Cloudinary)</span>
+                  </div>
+
+                  <!-- Upscale (no configurable params) -->
+                  <div v-if="block.type === 'upscale'" class="param-row">
+                    <span style="font-size: 12px; color: var(--text-muted);">Agrandissement IA sans perte de qualité</span>
+                  </div>
+
+                  <!-- Gen Fill -->
+                  <div v-if="block.type === 'gen_fill'" class="param-row">
+                    <label>Prompt</label>
+                    <input type="text" v-model="block.params.prompt" placeholder="(optionnel) ex: studio white background"
                            style="max-width: 400px;" @input="updateChain(group)">
                   </div>
 
@@ -937,13 +1327,52 @@
               </div>
 
               <div class="add-transform-btn">
-                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'trim')">+ Trim</button>
-                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'crop')">+ Crop</button>
-                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'gradient_fade')">+ Gradient Fade</button>
-                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'quality')">+ Quality</button>
-                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'background')">+ Background</button>
-                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'center')">+ Centre</button>
-                <button class="btn btn-sm btn-outline" @click="addTransform(group, 'custom')">+ Custom</button>
+                <button class="add-transform-dropdown-toggle"
+                        @click="transformMenuOpen = transformMenuOpen === group.id ? null : group.id">
+                  + Ajouter une transformation
+                </button>
+                <div v-if="transformMenuOpen === group.id" class="add-transform-menu"
+                     @mouseleave="transformMenuOpen = null">
+                  <div class="add-transform-menu-group">
+                    <div class="add-transform-menu-group-label">Recadrage</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'trim')">Trim (rognage auto)</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'crop')">Crop / Resize</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'center')">Centre (point focal)</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'rotation')">Rotation / Flip</div>
+                  </div>
+                  <div class="add-transform-menu-group">
+                    <div class="add-transform-menu-group-label">Ajustements</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'brightness')">Luminosité</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'contrast')">Contraste</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'saturation')">Saturation</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'vibrance')">Vibrance</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'sharpen')">Netteté</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'auto_improve')">Auto Improve</div>
+                  </div>
+                  <div class="add-transform-menu-group">
+                    <div class="add-transform-menu-group-label">Apparence</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'background')">Fond</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'gradient_fade')">Gradient Fade</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'border')">Bordure</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'radius')">Coins arrondis</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'opacity')">Opacité</div>
+                  </div>
+                  <div class="add-transform-menu-group">
+                    <div class="add-transform-menu-group-label">Livraison</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'quality')">Qualité</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'format')">Format</div>
+                  </div>
+                  <div class="add-transform-menu-group">
+                    <div class="add-transform-menu-group-label">IA</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'bgremoval')">Suppression de fond</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'upscale')">Upscale</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'gen_fill')">Gen Fill (extension IA)</div>
+                  </div>
+                  <div class="add-transform-menu-group">
+                    <div class="add-transform-menu-group-label">Avancé</div>
+                    <div class="add-transform-menu-item" @click="addTransform(group, 'custom')">Custom (raw)</div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -956,6 +1385,11 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
               <div style="display: flex; align-items: center; gap: 16px;">
                 <h4 style="font-size: 13px; color: var(--text-muted); margin: 0;">PREVIEW</h4>
+                <div class="col-control">
+                  <button class="col-btn" @click="previewCols = Math.max(1, previewCols - 1)">−</button>
+                  <span class="col-count">{{ previewCols }}</span>
+                  <button class="col-btn" @click="previewCols = Math.min(8, previewCols + 1)">+</button>
+                </div>
                 <div style="display: flex; gap: 4px; background: var(--surface-2); border-radius: 6px; padding: 2px;">
                   <button class="btn btn-sm" :class="groupShowAfter[group.id] ? 'btn-outline' : 'btn-accent'"
                           style="border: none;" @click="groupShowAfter[group.id] = false">Avant</button>
@@ -976,21 +1410,40 @@
               </div>
             </div>
 
-            <div class="preview-grid">
+            <div class="preview-grid" :style="{ gridTemplateColumns: 'repeat(' + previewCols + ', 1fr)' }">
               <div v-for="imgId in group.image_ids" :key="imgId" class="preview-item"
                    :style="{ border: groupSelectedIds[group.id]?.has(imgId) ? '2px solid var(--accent)' : '' }">
                 <div style="position: relative; cursor: pointer;" @click="toggleGroupImageSelect(group.id, imgId)">
                   <div class="card-check" style="z-index: 2;">{{ groupSelectedIds[group.id]?.has(imgId) ? '✓' : '' }}</div>
+                  <button class="group-remove-btn" @click.stop="removeImageFromGroup(group, imgId)" title="Retirer du groupe">×</button>
                 </div>
                 <div>
                   <img v-if="groupShowAfter[group.id]"
                        :src="buildTransformedUrl(imgId, group)" loading="lazy"
-                       style="width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; display: block;"
+                       style="width: 100%; background: #fff; display: block;"
                        @error="handleAfterError($event, imgId)">
-                  <img v-else
-                       :src="getImageById(imgId)?.thumb_url" loading="lazy"
-                       style="width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; display: block;"
-                       @error="$event.target.src = '/images/' + getImageById(imgId)?.local_path">
+                  <template v-else>
+                    <!-- Crop overlay mode: image at natural ratio + percentage-based overlay -->
+                    <div v-if="cropOverlayVisible[group.id]" class="crop-overlay-container">
+                      <img :src="buildCropPreviewUrl(imgId, group)"
+                           loading="lazy"
+                           @load="onCropImgLoad($event, imgId)"
+                           style="width: 100%; display: block; background: #fff;"
+                           @error="$event.target.src = '/images/' + getImageById(imgId)?.local_path">
+                      <template v-if="getCropOverlay(group, imgId)">
+                        <div class="crop-overlay-dim" :style="getCropOverlay(group, imgId).top"></div>
+                        <div class="crop-overlay-dim" :style="getCropOverlay(group, imgId).bottom"></div>
+                        <div class="crop-overlay-dim" :style="getCropOverlay(group, imgId).left"></div>
+                        <div class="crop-overlay-dim" :style="getCropOverlay(group, imgId).right"></div>
+                        <div class="crop-overlay-border" :style="getCropOverlay(group, imgId).crop"></div>
+                      </template>
+                    </div>
+                    <!-- Normal thumb mode -->
+                    <img v-else
+                         :src="getImageById(imgId)?.thumb_url" loading="lazy"
+                         style="width: 100%; background: #fff; display: block;"
+                         @error="$event.target.src = '/images/' + getImageById(imgId)?.local_path">
+                  </template>
                 </div>
                 <div class="preview-ref">{{ getImageById(imgId)?.ref }} &middot; {{ getImageById(imgId)?.type }}</div>
               </div>
@@ -1176,6 +1629,10 @@ createApp({
     const groupShowAfter = reactive({});
     const groupSelectedIds = reactive({});
     const centerPickerCursor = reactive({});
+    const transformMenuOpen = ref(null);
+    const previewCols = ref(3);
+    const cropOverlayVisible = reactive({});
+    const cropImgNatural = reactive({});
     const showExportImagesModal = ref(null);
     const exportFormat = ref('jpg');
     const exportProgress = ref(null);
@@ -1350,6 +1807,17 @@ createApp({
       groupSelectedIds[groupId] = new Set(groupSelectedIds[groupId]);
     }
 
+    // Remove a single image from a group (in Groups view)
+    function removeImageFromGroup(group, imgId) {
+      group.image_ids = group.image_ids.filter(id => id !== imgId);
+      if (group.image_ids.length === 0) {
+        groups.value = groups.value.filter(g => g.id !== group.id);
+        expandedGroup.value = null;
+      }
+      syncGroupIds();
+      saveGroups();
+    }
+
     // Remove selected images from a group (in Groups view)
     function removeFromGroup(group) {
       const sel = groupSelectedIds[group.id];
@@ -1381,18 +1849,48 @@ createApp({
       return imageMap.value[imgId] || null;
     }
 
+    // Transform labels
+    const TRANSFORM_LABELS = {
+      trim: 'Trim', crop: 'Crop / Resize', center: 'Centre (focal)',
+      rotation: 'Rotation / Flip',
+      brightness: 'Luminosité', contrast: 'Contraste', saturation: 'Saturation',
+      vibrance: 'Vibrance', sharpen: 'Netteté', auto_improve: 'Auto Improve',
+      background: 'Fond', gradient_fade: 'Gradient Fade', border: 'Bordure',
+      radius: 'Coins arrondis', opacity: 'Opacité',
+      quality: 'Qualité', format: 'Format',
+      bgremoval: 'Suppression de fond (IA)', upscale: 'Upscale (IA)',
+      gen_fill: 'Gen Fill (IA)',
+      custom: 'Custom'
+    };
+    function transformLabel(type) { return TRANSFORM_LABELS[type] || type; }
+
     // Transform management
     function addTransform(group, type) {
       const defaults = {
         trim: { tolerance: 50 },
-        crop: { mode: 'crop', gravity: 'center', width: '', height: '', aspect_ratio: '' },
+        crop: { mode: 'crop', gravity: 'center', width: '', height: '', aspect_ratio: '', x_offset: 0, y_offset: 0 },
         gradient_fade: { direction: 'bottom', strength: 40, y: '' },
         quality: { level: 'auto:good' },
         background: { color: 'white' },
         custom: { raw: '' },
-        center: { x: 0.5, y: 0.5, ref_width: 0, ref_height: 0 }
+        center: { x: 0.5, y: 0.5, ref_width: 0, ref_height: 0 },
+        brightness: { level: 0 },
+        contrast: { level: 0 },
+        saturation: { level: 0 },
+        vibrance: { level: 0 },
+        sharpen: { strength: 100 },
+        auto_improve: { mode: '' },
+        rotation: { angle: '0', flip: '' },
+        border: { width: 2, color: 'black' },
+        radius: { value: '20' },
+        opacity: { level: 100 },
+        format: { value: 'auto' },
+        bgremoval: {},
+        upscale: {},
+        gen_fill: { prompt: '' }
       };
       group.transformations.push({ type, params: { ...defaults[type] } });
+      transformMenuOpen.value = null;
       updateChain(group);
     }
 
@@ -1475,6 +1973,8 @@ createApp({
             if (p.width) seg += `,w_${p.width}`;
             if (p.height) seg += `,h_${p.height}`;
             if (p.aspect_ratio) seg += `,ar_${p.aspect_ratio}`;
+            if (p.x_offset) seg += `,x_${p.x_offset}`;
+            if (p.y_offset) seg += `,y_${p.y_offset}`;
             parts.push(seg);
             break;
           }
@@ -1518,6 +2018,65 @@ createApp({
             if (p.raw) parts.push(p.raw);
             break;
           }
+          case 'brightness': {
+            if (p.level !== 0) parts.push(`e_brightness:${p.level}`);
+            break;
+          }
+          case 'contrast': {
+            if (p.level !== 0) parts.push(`e_contrast:${p.level}`);
+            break;
+          }
+          case 'saturation': {
+            if (p.level !== 0) parts.push(`e_saturation:${p.level}`);
+            break;
+          }
+          case 'vibrance': {
+            if (p.level !== 0) parts.push(`e_vibrance:${p.level}`);
+            break;
+          }
+          case 'sharpen': {
+            parts.push(`e_sharpen:${p.strength || 100}`);
+            break;
+          }
+          case 'auto_improve': {
+            parts.push(p.mode ? `e_improve:${p.mode}` : 'e_improve');
+            break;
+          }
+          case 'rotation': {
+            const segs = [];
+            if (p.angle && p.angle !== '0') segs.push(`a_${p.angle}`);
+            if (p.flip) segs.push(`a_${p.flip}`);
+            if (segs.length) parts.push(segs.join(','));
+            break;
+          }
+          case 'border': {
+            parts.push(`bo_${p.width || 2}px_solid_${(p.color || 'black').replace('#', '')}`);
+            break;
+          }
+          case 'radius': {
+            parts.push(`r_${p.value || 20}`);
+            break;
+          }
+          case 'opacity': {
+            if (p.level !== 100) parts.push(`o_${p.level}`);
+            break;
+          }
+          case 'format': {
+            if (p.value) parts.push(`f_${p.value}`);
+            break;
+          }
+          case 'bgremoval': {
+            parts.push('e_background_removal');
+            break;
+          }
+          case 'upscale': {
+            parts.push('e_upscale');
+            break;
+          }
+          case 'gen_fill': {
+            parts.push(p.prompt ? `b_gen_fill:${p.prompt}` : 'b_gen_fill');
+            break;
+          }
         }
       }
       return parts.join('/');
@@ -1526,6 +2085,112 @@ createApp({
     function updateChain(group) {
       group.cloudinary_chain = buildChain(group.transformations);
       saveGroups();
+    }
+
+    // Arrow keys on text inputs: ↑/↓ = ±1, Shift+↑/↓ = ±10
+    function stepNumericInput(event, obj, key, group) {
+      if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+      const val = parseFloat(obj[key]);
+      if (isNaN(val)) return;
+      event.preventDefault();
+      const step = event.shiftKey ? 10 : 1;
+      const dir = event.key === 'ArrowUp' ? 1 : -1;
+      obj[key] = String(Math.max(0, val + step * dir));
+      updateChain(group);
+    }
+
+    // Nudge crop offset
+    function nudgeCrop(block, group, dx, dy) {
+      const step = 10;
+      block.params.x_offset = (block.params.x_offset || 0) + dx * step;
+      block.params.y_offset = (block.params.y_offset || 0) + dy * step;
+      updateChain(group);
+    }
+
+    // Track natural dimensions of preview images for crop overlay
+    function onCropImgLoad(event, imgId) {
+      const img = event.target;
+      cropImgNatural[imgId] = {
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight
+      };
+    }
+
+    // Compute crop overlay as pure percentages.
+    // The image is displayed at its natural ratio (no object-fit: contain in a square),
+    // so percentages map directly to image coordinates.
+    function getCropOverlay(group, imgId) {
+      if (!cropOverlayVisible[group.id]) return null;
+      const cropBlock = group.transformations?.find(b => b.type === 'crop');
+      if (!cropBlock) return null;
+      const p = cropBlock.params;
+      const nat = cropImgNatural[imgId];
+      if (!nat) return null;
+
+      const imgW = nat.naturalWidth;
+      const imgH = nat.naturalHeight;
+      if (!imgW || !imgH) return null;
+
+      // --- Crop zone as ratio (0-1) of the source ---
+      let pw = p.width ? parseFloat(p.width) : 0;
+      let ph = p.height ? parseFloat(p.height) : 0;
+      const wIsRelative = p.width && /[a-z]/i.test(String(p.width));
+      const hIsRelative = p.height && /[a-z]/i.test(String(p.height));
+
+      let rw = wIsRelative ? 1 : (pw > 0 ? pw / imgW : 0);
+      let rh = hIsRelative ? 1 : (ph > 0 ? ph / imgH : 0);
+
+      // Aspect ratio
+      if (p.aspect_ratio && (rw === 0 || rh === 0)) {
+        const m = String(p.aspect_ratio).match(/^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/);
+        if (m) {
+          const ar = parseFloat(m[1]) / parseFloat(m[2]);
+          if (rw > 0 && rh === 0) rh = (rw * imgW) / (ar * imgH);
+          else if (rh > 0 && rw === 0) rw = (rh * imgH * ar) / imgW;
+          else { const iar = imgW / imgH; if (ar > iar) { rw = 1; rh = iar / ar; } else { rh = 1; rw = ar / iar; } }
+        }
+      }
+
+      if (rw === 0 && rh === 0) return null;
+      if (rw === 0) rw = 1;
+      if (rh === 0) rh = 1;
+      rw = Math.min(rw, 1);
+      rh = Math.min(rh, 1);
+
+      // --- Position based on gravity ---
+      let rx = 0, ry = 0;
+      const g = p.gravity || 'center';
+      if (g.includes('west')) rx = 0;
+      else if (g.includes('east')) rx = 1 - rw;
+      else rx = (1 - rw) / 2;
+
+      if (g.includes('north')) ry = 0;
+      else if (g.includes('south')) ry = 1 - rh;
+      else ry = (1 - rh) / 2;
+
+      // Pixel offsets as proportion
+      rx += (p.x_offset || 0) / imgW;
+      ry += (p.y_offset || 0) / imgH;
+      rx = Math.max(0, Math.min(rx, 1 - rw));
+      ry = Math.max(0, Math.min(ry, 1 - rh));
+
+      // --- Percentage-based overlay (no pixel calc needed) ---
+      const l = (rx * 100) + '%';
+      const t = (ry * 100) + '%';
+      const w = (rw * 100) + '%';
+      const h = (rh * 100) + '%';
+      const r = ((rx + rw) * 100) + '%';  // right edge
+      const b = ((ry + rh) * 100) + '%';  // bottom edge
+      const remW = ((1 - rx - rw) * 100) + '%';
+      const remH = ((1 - ry - rh) * 100) + '%';
+
+      return {
+        crop:   { left: l, top: t, width: w, height: h },
+        top:    { left: '0', top: '0', width: '100%', height: t },
+        bottom: { left: '0', top: b, width: '100%', height: remH },
+        left:   { left: '0', top: t, width: l, height: h },
+        right:  { left: r, top: t, width: remW, height: h }
+      };
     }
 
     // Build transformed URL for preview
@@ -1538,6 +2203,19 @@ createApp({
       const base = 'https://www.chanel.com/images/';
       const chain = group.cloudinary_chain;
       return `${base}t_one/${chain}/q_auto:good,f_auto,fl_lossy/w_400/${img.filename}`;
+    }
+
+    // Build URL with all transforms EXCEPT crop — used as base for crop overlay.
+    // No w_ constraint so naturalWidth/Height reflect the real image dimensions
+    // at the point where Cloudinary would apply the crop.
+    function buildCropPreviewUrl(imgId, group) {
+      const img = imageMap.value[imgId];
+      if (!img) return img?.thumb_url || '';
+      const withoutCrop = (group.transformations || []).filter(b => b.type !== 'crop');
+      const chain = buildChain(withoutCrop);
+      const base = 'https://www.chanel.com/images/';
+      const chainPart = chain ? `${chain}/` : '';
+      return `${base}t_one/${chainPart}q_auto:low,f_auto,fl_lossy/${img.filename}`;
     }
 
     function handleAfterError(event, imgId) {
@@ -1882,14 +2560,15 @@ createApp({
       loading, currentTab, inventory, groups, selectedIds,
       filterCategory, filterType, filterState,
       expandedGroup, showCreateGroupModal, showAddToGroupMenu, newGroupName, groupNameInput,
-      groupShowAfter, groupSelectedIds,
+      previewCols, groupShowAfter, groupSelectedIds,
       showExportImagesModal, exportFormat, exportProgress, exportPercent, exportFolder, exportImages, openInFinder,
       filteredImages, ungroupedCount, groupedCount, selectableFilteredCount, selectedGroupedCount,
       selectAllFiltered, toggleSelect, createGroup, addToExistingGroup, deleteGroup, ungroupImage, ungroupSelected, deleteSelectedImages,
-      toggleGroup, toggleGroupImageSelect, removeFromGroup, getGroupName, getImageById,
-      addTransform, removeTransform, moveTransform, updateChain,
-      centerPickerCursor, onCenterPickerMove, onCenterPickerLeave, onCenterPickerClick, onPickerImageLoad,
-      buildTransformedUrl, handleAfterError,
+      toggleGroup, toggleGroupImageSelect, removeImageFromGroup, removeFromGroup, getGroupName, getImageById,
+      addTransform, removeTransform, moveTransform, updateChain, transformLabel,
+      centerPickerCursor, onCenterPickerMove, onCenterPickerLeave, onCenterPickerClick, onPickerImageLoad, transformMenuOpen,
+      cropOverlayVisible, cropImgNatural, stepNumericInput, nudgeCrop, onCropImgLoad, getCropOverlay,
+      buildTransformedUrl, buildCropPreviewUrl, handleAfterError,
       saveGroups, exportGroup, exportAll, formatDate,
       scanUrls, scanRunning, scanStatus, scanPercent, scanLog, scanResult, scanDone, scanLogEl,
       startScan, clearScan, loadScannedInventory
