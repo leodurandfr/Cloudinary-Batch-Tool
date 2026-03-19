@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import SlotTransformEditor from '@/components/layouts/SlotTransformEditor.vue'
+import TemplateView from '@/components/layouts/TemplateView.vue'
 import { useReferences } from '@/composables/useReferences'
 import { useDisplayRules } from '@/composables/useDisplayRules'
 import { useCloudinary } from '@/composables/useCloudinary'
@@ -29,6 +30,7 @@ const { handleAfterError } = useCloudinary()
 
 const showSidebar = ref(true)
 const showRules = ref(false)
+const viewMode = ref('overview') // 'overview' | 'template'
 
 const has3d = computed(() =>
   selectedRef.value ? !!refsState.value.has3d?.[selectedRef.value.ref] : false
@@ -126,22 +128,52 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
               {{ selectedRef.category }} · {{ selectedRefImages.length }} image{{ selectedRefImages.length !== 1 ? 's' : '' }}
             </p>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-4 shrink-0">
             <Label class="text-xs text-muted-foreground">Vue 3D</Label>
             <Switch
               :model-value="has3d"
               @update:model-value="toggleHas3d(selectedRef.ref)"
             />
+
+            <div class="flex items-center border rounded-md overflow-hidden ml-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                class="h-7 text-xs rounded-none px-3"
+                :class="viewMode === 'overview' ? 'bg-primary/15 text-primary' : 'text-muted-foreground'"
+                @click="viewMode = 'overview'"
+              >
+                Overview
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                class="h-7 text-xs rounded-none px-3"
+                :class="viewMode === 'template' ? 'bg-primary/15 text-primary' : 'text-muted-foreground'"
+                @click="viewMode = 'template'"
+              >
+                Template
+              </Button>
+            </div>
           </div>
         </div>
 
         <!-- Scrollable content -->
-        <div class="flex-1 overflow-y-auto p-5 space-y-6">
+        <div class="flex-1 overflow-y-auto" :class="viewMode === 'overview' ? 'p-5 space-y-6' : 'p-0'">
 
             <div v-if="!selectedRefLayout" class="text-center py-12 text-sm text-muted-foreground">
               Aucune image pour cette référence.
             </div>
 
+            <!-- TEMPLATE MODE -->
+            <TemplateView
+              v-else-if="viewMode === 'template'"
+              :layout="selectedRefLayout"
+              :ref-info="selectedRef"
+              :has3d="has3d"
+            />
+
+            <!-- OVERVIEW MODE -->
             <template v-else>
               <!-- Cover block -->
               <Card>

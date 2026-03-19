@@ -32,6 +32,10 @@ app.use('/images', express.static(IMAGES_ROOT, {
   immutable: true
 }));
 
+// Serve extracted layout assets (CSS, HTML, etc.)
+const LAYOUTS_DIR = path.join(__dirname, '_extracted-layouts');
+app.use('/_layouts', express.static(LAYOUTS_DIR, { maxAge: '1h' }));
+
 // GET inventory
 app.get('/api/inventory', (req, res) => {
   if (!fs.existsSync(INVENTORY_FILE)) {
