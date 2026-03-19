@@ -152,6 +152,15 @@ function moveTransform(group, index, direction) {
   updateChain(group)
 }
 
+function reorderTransform(group, from, to) {
+  if (from === to) return
+  const arr = [...group.transformations]
+  const [moved] = arr.splice(from, 1)
+  arr.splice(to, 0, moved)
+  group.transformations.splice(0, group.transformations.length, ...arr)
+  updateChain(group)
+}
+
 function updateChain(group) {
 
   group.cloudinary_chain = buildChain(group.transformations)
@@ -202,7 +211,11 @@ function exportAll() {
 
 async function exportImages(groupId, format = 'jpg', onProgress) {
   const group = groups.value.find(g => g.id === groupId)
-  if (!group || !group.cloudinary_chain) return
+  if (!group) return
+  if (!group.cloudinary_chain) {
+    if (onProgress) onProgress({ error: 'Aucune transformation configurée pour ce groupe.' })
+    return
+  }
 
 
 
@@ -287,6 +300,7 @@ export function useGroups() {
     addTransform,
     removeTransform,
     moveTransform,
+    reorderTransform,
     updateChain,
     exportGroup,
     exportAll,
