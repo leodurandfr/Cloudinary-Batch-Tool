@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useCloudinary } from '@/composables/useCloudinary'
 
-const { handleAfterError } = useCloudinary()
+const { handleAfterError, buildTwoLayerUrl } = useCloudinary()
 
 const props = defineProps({
   layout: { type: Object, required: true },
@@ -16,6 +16,16 @@ function isPortee(type) {
 
 function getAspectRatio(item) {
   return isPortee(item.image.type) ? 0.6666666666666666 : 1
+}
+
+const coverUrl = computed(() => {
+  if (!props.layout.cover) return ''
+  const { image, layer1Chain, layer2Chain } = props.layout.cover
+  return buildTwoLayerUrl(image, layer1Chain, layer2Chain, 1200)
+})
+
+function galleryHiRes(item) {
+  return buildTwoLayerUrl(item.image, item.layer1Chain, item.layer2Chain, 1000)
 }
 
 const zoomUrl = computed(() => {
@@ -84,7 +94,7 @@ function scrollCarousel(dir) {
         </div>
         <img
           v-else-if="layout.cover"
-          :src="layout.cover.finalUrl"
+          :src="coverUrl"
           :alt="refInfo.ref"
           class="tpl-hero__img"
           @error="handleAfterError($event, layout.cover.image.id)"
@@ -138,7 +148,7 @@ function scrollCarousel(dir) {
                 : 'tpl-simple-product'"
               :style="{ '--pic-aspect-ratio': getAspectRatio(item) }"
             >
-              <img :src="item.finalUrl" :alt="item.image.type" @error="handleAfterError($event, item.image.id)" />
+              <img :src="galleryHiRes(item)" :alt="item.image.type" @error="handleAfterError($event, item.image.id)" />
             </div>
           </div>
         </div>
@@ -156,7 +166,7 @@ function scrollCarousel(dir) {
               class="tpl-pic-carousel__slide"
               :style="{ '--pic-aspect-ratio': getAspectRatio(item) }"
             >
-              <img :src="item.finalUrl" :alt="item.image.type" @error="handleAfterError($event, item.image.id)" />
+              <img :src="galleryHiRes(item)" :alt="item.image.type" @error="handleAfterError($event, item.image.id)" />
             </div>
           </div>
           <div class="tpl-pic-carousel__nav">
