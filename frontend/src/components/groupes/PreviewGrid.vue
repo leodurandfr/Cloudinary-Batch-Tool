@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { Check, X, Minus, Plus } from 'lucide-vue-next'
+import { X, Minus, Plus } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import CropOverlay from './CropOverlay.vue'
 import { useGroups } from '@/composables/useGroups'
@@ -16,23 +16,28 @@ const cropImgNatural = reactive({})
 
 const emit = defineEmits(['update:previewCols'])
 
-const { getImageById, removeImageFromGroup, removeSelectedFromGroup } = useGroups()
+const { getImageById, removeImageFromGroup } = useGroups()
 const { buildTransformedUrl, handleAfterError } = useCloudinary()
 
 const showAfter = ref(false)
 const selectedIds = reactive(new Set())
 
 const hasSelection = computed(() => selectedIds.size > 0)
+const allSelected = computed(() =>
+  props.group.image_ids.length > 0 && selectedIds.size === props.group.image_ids.length
+)
+
+function toggleSelectAll() {
+  if (allSelected.value) selectedIds.clear()
+  else props.group.image_ids.forEach(id => selectedIds.add(id))
+}
 
 function toggleSelect(imgId) {
   if (selectedIds.has(imgId)) selectedIds.delete(imgId)
   else selectedIds.add(imgId)
 }
 
-function handleRemoveSelected() {
-  removeSelectedFromGroup(props.group, selectedIds)
-  selectedIds.clear()
-}
+defineExpose({ selectedIds, hasSelection, toggleSelectAll })
 
 function onCropImgLoad(event, imgId) {
   cropImgNatural[imgId] = {
@@ -73,15 +78,6 @@ function onCropImgLoad(event, imgId) {
             @click="showAfter = true"
           >Après</Button>
         </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <template v-if="hasSelection">
-          <span class="text-xs text-primary">{{ selectedIds.size }} sélectionnée(s)</span>
-          <Button variant="destructive" size="sm" class="h-7 text-xs" @click="handleRemoveSelected">
-            Retirer du groupe
-          </Button>
-        </template>
       </div>
     </div>
 

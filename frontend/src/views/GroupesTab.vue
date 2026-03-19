@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { Trash2, Download, FileJson } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import SelectionBar from '@/components/SelectionBar.vue'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -23,6 +23,7 @@ const previewCols = ref(3)
 const cropOverlayVisible = reactive({})
 const showDeleteConfirm = ref(false)
 const showExportModal = ref(false)
+const previewGridRef = ref(null)
 
 const selectedGroup = computed(() =>
   groups.value.find(g => g.id === selectedGroupId.value) || null
@@ -85,8 +86,7 @@ function handleDelete() {
 
       <!-- Export all button -->
       <div v-if="groups.length > 0" class="p-3 border-t">
-        <Button variant="outline" size="sm" class="w-full text-xs gap-1.5" @click="exportAll">
-          <FileJson class="w-3.5 h-3.5" />
+        <Button variant="outline" size="sm" class="w-full text-xs" @click="exportAll">
           Exporter tous les groupes
         </Button>
       </div>
@@ -116,16 +116,13 @@ function handleDelete() {
             </p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" class="h-7 text-xs gap-1" @click="exportGroup(selectedGroup)">
-              <FileJson class="w-3.5 h-3.5" />
+            <Button variant="outline" size="sm" class="h-7 text-xs" @click="exportGroup(selectedGroup)">
               Export JSON
             </Button>
-            <Button variant="outline" size="sm" class="h-7 text-xs gap-1" @click="showExportModal = true">
-              <Download class="w-3.5 h-3.5" />
+            <Button variant="outline" size="sm" class="h-7 text-xs" @click="showExportModal = true">
               Export images
             </Button>
-            <Button variant="destructive" size="sm" class="h-7 text-xs gap-1" @click="confirmDelete">
-              <Trash2 class="w-3.5 h-3.5" />
+            <Button variant="destructive" size="sm" class="h-7 text-xs" @click="confirmDelete">
               Supprimer
             </Button>
           </div>
@@ -143,12 +140,21 @@ function handleDelete() {
 
           <!-- Preview grid -->
           <PreviewGrid
+            ref="previewGridRef"
             :group="selectedGroup"
             :preview-cols="previewCols"
             :crop-overlay-visible="cropOverlayVisible"
             @update:preview-cols="v => previewCols = v"
           />
         </div>
+
+        <!-- Selection bar (sticky bottom) -->
+        <SelectionBar
+          v-if="previewGridRef?.hasSelection"
+          :selected-count="previewGridRef.selectedIds.size"
+          :total-count="selectedGroup.image_ids.length"
+          @toggle="previewGridRef.toggleSelectAll()"
+        />
       </template>
     </div>
 
@@ -165,7 +171,6 @@ function handleDelete() {
         <DialogFooter class="gap-2">
           <Button variant="outline" @click="showDeleteConfirm = false">Annuler</Button>
           <Button variant="destructive" @click="handleDelete">
-            <Trash2 class="w-4 h-4 mr-1" />
             Supprimer
           </Button>
         </DialogFooter>

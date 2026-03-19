@@ -1,8 +1,9 @@
 <script setup>
 import { reactive, computed, ref, watch, nextTick } from 'vue'
-import { Check, Search, Plus, Trash2, X, UserMinus } from 'lucide-vue-next'
+import { Check, Search } from 'lucide-vue-next'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
+import SelectionBar from '@/components/SelectionBar.vue'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -36,6 +37,15 @@ const selectedGroupedCount = computed(() => {
   }
   return count
 })
+
+const allFilteredSelected = computed(() =>
+  filteredImages.value.length > 0 && filteredImages.value.every(img => selectedIds.has(img.id))
+)
+
+function toggleSelectAll() {
+  if (allFilteredSelected.value) clearSelection()
+  else selectAllFiltered()
+}
 
 // --- Actions ---
 function toggleSelect(img) {
@@ -322,40 +332,24 @@ watch(showCreateGroupModal, (val) => {
       </div>
 
       <!-- Selection bar (sticky bottom) -->
-      <div
-        v-if="selectedIds.size > 0"
-        class="border-t bg-primary text-primary-foreground px-5 py-3 flex items-center justify-between gap-4"
+      <SelectionBar
+        :selected-count="selectedIds.size"
+        :total-count="filteredImages.length"
+        @toggle="toggleSelectAll"
       >
-        <span class="text-sm font-medium whitespace-nowrap">
-          {{ selectedIds.size }} image{{ selectedIds.size !== 1 ? 's' : '' }} sélectionnée{{ selectedIds.size !== 1 ? 's' : '' }}
-        </span>
-        <div class="flex items-center gap-2">
-          <Button variant="link" size="sm" class="text-primary-foreground h-7" @click="selectAllFiltered">
-            Tout sélectionner ({{ filteredImages.length }})
-          </Button>
-          <Button variant="link" size="sm" class="text-primary-foreground h-7" @click="clearSelection">
-            Désélectionner
-          </Button>
-          <Button
-            v-if="selectedGroupedCount > 0"
-            variant="secondary"
-            size="sm"
-            class="h-7 gap-1"
-            @click="handleUngroupSelected"
-          >
-            <UserMinus class="w-3.5 h-3.5" />
-            Retirer du groupe ({{ selectedGroupedCount }})
-          </Button>
-          <Button variant="destructive" size="sm" class="h-7 gap-1" @click="showDeleteConfirm = true">
-            <Trash2 class="w-3.5 h-3.5" />
-            Supprimer ({{ selectedIds.size }})
-          </Button>
-          <Button variant="secondary" size="sm" class="h-7 gap-1 bg-primary-foreground text-primary hover:bg-primary-foreground/90" @click="handleGroupAction">
-            <Plus class="w-3.5 h-3.5" />
-            {{ groups.length > 0 ? 'Grouper...' : 'Créer un groupe' }}
-          </Button>
-        </div>
-      </div>
+        <Button
+          v-if="selectedGroupedCount > 0"
+          variant="secondary"
+          size="sm"
+          class="h-7 text-xs"
+          @click="handleUngroupSelected"
+        >
+          Retirer du groupe ({{ selectedGroupedCount }})
+        </Button>
+        <Button variant="secondary" size="sm" class="h-7 text-xs bg-primary-foreground text-primary hover:bg-primary-foreground/90" @click="handleGroupAction">
+          {{ groups.length > 0 ? 'Grouper...' : 'Créer un groupe' }}
+        </Button>
+      </SelectionBar>
     </div>
 
     <!-- Modal: Add to existing group -->
