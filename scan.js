@@ -16,7 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const IMAGES_ROOT = path.resolve(__dirname, '..');
+const IMAGES_ROOT = path.resolve(__dirname, '..', 'chanel_images');
 const OUTPUT_FILE = path.join(__dirname, 'inventory.json');
 
 // Chanel Cloudinary URL base
