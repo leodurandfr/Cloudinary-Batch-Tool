@@ -24,9 +24,6 @@ app.use(express.json({ limit: '10mb' }));
 
 let scanRunning = false;
 
-// Serve the app
-app.use(express.static(__dirname));
-
 // Serve local images (for "before" preview fallback)
 app.use('/images', express.static(IMAGES_ROOT, {
   maxAge: '1d',
@@ -171,6 +168,17 @@ app.post('/api/open-folder', (req, res) => {
   require('child_process').spawn('open', [fullPath], { detached: true, stdio: 'ignore' }).unref();
   res.json({ ok: true, path: fullPath });
 });
+
+// Serve frontend build if available, otherwise fall back to legacy index.html
+const FRONTEND_DIST = path.join(__dirname, 'frontend', 'dist');
+if (fs.existsSync(FRONTEND_DIST)) {
+  app.use(express.static(FRONTEND_DIST));
+  app.get('/{*path}', (req, res) => {
+    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+  });
+} else {
+  app.use(express.static(__dirname));
+}
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Chanel Image Batch Tool`);
