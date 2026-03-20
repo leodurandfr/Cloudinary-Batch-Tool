@@ -428,6 +428,47 @@ function setCropOverlay(val) {
       </div>
     </template>
 
+    <!-- Zoom -->
+    <template v-if="block.type === 'zoom'">
+      <div class="flex items-center gap-3">
+        <Label class="w-24 shrink-0 text-xs">Niveau</Label>
+        <Slider
+          :model-value="[block.params.level ?? 1]"
+          :min="0.25" :max="5" :step="0.05"
+          class="flex-1"
+          @update:model-value="v => { block.params.level = Math.round(v[0] * 100) / 100; triggerUpdate() }"
+        />
+        <span class="text-xs text-muted-foreground w-10 text-right">×{{ block.params.level ?? 1 }}</span>
+      </div>
+      <CenterPicker :group="group" :block-index="blockIndex" />
+      <div class="flex items-center gap-3">
+        <Label class="w-16 shrink-0 text-xs">X</Label>
+        <Input
+          type="number"
+          :model-value="block.params.x ?? 0.5"
+          min="0" max="1" step="0.001"
+          class="flex-1 h-8 text-xs"
+          @update:model-value="v => { block.params.x = Math.max(0, Math.min(1, parseFloat(v) || 0)); triggerUpdate() }"
+        />
+      </div>
+      <div class="flex items-center gap-3">
+        <Label class="w-16 shrink-0 text-xs">Y</Label>
+        <Input
+          type="number"
+          :model-value="block.params.y ?? 0.5"
+          min="0" max="1" step="0.001"
+          class="flex-1 h-8 text-xs"
+          @update:model-value="v => { block.params.y = Math.max(0, Math.min(1, parseFloat(v) || 0)); triggerUpdate() }"
+        />
+      </div>
+      <Button variant="outline" size="sm" class="text-xs" @click="block.params.x = 0.5; block.params.y = 0.5; block.params.level = 1; triggerUpdate()">
+        Reset
+      </Button>
+      <div v-if="block.params.ref_width" class="text-[11px] text-muted-foreground">
+        Source : {{ block.params.ref_width }}×{{ block.params.ref_height }}px
+      </div>
+    </template>
+
     <!-- Custom -->
     <div v-if="block.type === 'custom'" class="flex items-center gap-3">
       <Label class="w-24 shrink-0 text-xs">Params</Label>

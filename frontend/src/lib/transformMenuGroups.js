@@ -4,7 +4,6 @@ export const TRANSFORM_MENU_GROUPS = [
     items: [
       { type: 'trim', label: 'Trim (rognage auto)' },
       { type: 'crop', label: 'Crop / Resize' },
-      { type: 'center', label: 'Centre (point focal)' },
       { type: 'rotation', label: 'Rotation / Flip' }
     ]
   },
@@ -42,6 +41,13 @@ export const TRANSFORM_MENU_GROUPS = [
       { type: 'bgremoval', label: 'Suppression de fond' },
       { type: 'upscale', label: 'Upscale' },
       { type: 'gen_fill', label: 'Gen Fill (extension IA)' }
+    ]
+  },
+  {
+    label: 'Effets personnalisés',
+    items: [
+      { type: 'center', label: 'Centre (point focal)' },
+      { type: 'zoom', label: 'Zoom' }
     ]
   },
   {

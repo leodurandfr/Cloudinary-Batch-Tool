@@ -1,6 +1,9 @@
+import { ref } from 'vue'
 import { useInventory } from './useInventory'
 
 const { imageMap } = useInventory()
+
+const useLocal = ref(false)
 
 const TRANSFORM_LABELS = {
   trim: 'Trim', crop: 'Crop / Resize', center: 'Centre (focal)',
@@ -184,23 +187,36 @@ function buildChain(transformations) {
         break
       case 'zoom': {
         const zoom = p.level ?? 1
+        if (Math.abs(zoom - 1) < 0.001) break
         const rw = p.ref_width || 0
         const rh = p.ref_height || 0
-        if (rw > 0 && rh > 0 && zoom !== 1) {
-          if (zoom > 1) {
+        const cx = p.x ?? 0.5
+        const cy = p.y ?? 0.5
+        const isCenter = Math.abs(cx - 0.5) < 0.001 && Math.abs(cy - 0.5) < 0.001
+        const prop = Math.round((1 / zoom) * 10000) / 10000
+        if (zoom > 1) {
+          if (rw > 0 && rh > 0) {
             const cropW = Math.round(rw / zoom)
             const cropH = Math.round(rh / zoom)
-            const cx = p.x ?? 0.5
-            const cy = p.y ?? 0.5
             const fx = Math.round(cx * rw)
             const fy = Math.round(cy * rh)
             const ox = Math.max(0, Math.min(fx - Math.round(cropW / 2), rw - cropW))
             const oy = Math.max(0, Math.min(fy - Math.round(cropH / 2), rh - cropH))
             parts.push(`c_crop,w_${cropW},h_${cropH},x_${ox},y_${oy},g_north_west`)
           } else {
+            if (isCenter) {
+              parts.push(`c_crop,w_${prop},h_${prop},g_center`)
+            } else {
+              parts.push(`c_crop,w_${prop},h_${prop},g_xy_center,x_${cx},y_${cy}`)
+            }
+          }
+        } else {
+          if (rw > 0 && rh > 0) {
             const padW = Math.round(rw / zoom)
             const padH = Math.round(rh / zoom)
             parts.push(`c_pad,w_${padW},h_${padH},g_center,b_white`)
+          } else {
+            parts.push(`c_pad,w_${prop},h_${prop},g_center,b_white`)
           }
         }
         break
@@ -227,9 +243,31 @@ function fixCloudinaryUrl(image, urlKey = 'thumb_url') {
   return url
 }
 
+function localUrl(image) {
+  if (!image?.local_path) return ''
+  return '/images/' + image.local_path
+}
+
+function thumbUrl(image) {
+  if (!image) return ''
+  if (useLocal.value) return localUrl(image)
+  return fixCloudinaryUrl(image)
+}
+
+function onImgError(event) {
+  const img = event.target
+  img.style.display = 'none'
+  if (img.parentElement.querySelector('.img-unavailable')) return
+  const el = document.createElement('div')
+  el.className = 'img-unavailable'
+  el.textContent = 'Image non disponible'
+  img.parentElement.appendChild(el)
+}
+
 function buildTransformedUrl(imgId, group) {
   const img = imageMap.value[imgId]
-  if (!img || !group.cloudinary_chain) return fixCloudinaryUrl(img)
+  if (!img) return ''
+  if (useLocal.value || !group.cloudinary_chain) return localUrl(img)
   const base = cloudinaryBase(img.type)
   const chain = group.cloudinary_chain
   return `${base}t_one/${chain}/q_auto:good,f_auto,fl_lossy/w_400/${img.filename}`
@@ -238,11 +276,22 @@ function buildTransformedUrl(imgId, group) {
 function buildCropPreviewUrl(imgId, group) {
   const img = imageMap.value[imgId]
   if (!img) return ''
+  if (useLocal.value) return localUrl(img)
   const withoutCrop = (group.transformations || []).filter(b => b.type !== 'crop')
   const chain = buildChain(withoutCrop)
+  if (!chain) return localUrl(img)
   const base = cloudinaryBase(img.type)
   const chainPart = chain ? `${chain}/` : ''
   return `${base}t_one/${chainPart}q_auto:low,f_auto,fl_lossy/${img.filename}`
+}
+
+function buildTwoLayerUrl(image, layer1Chain, layer2Chain, width = 400) {
+  if (!image) return ''
+  if (useLocal.value || (!layer1Chain && !layer2Chain)) return localUrl(image)
+  const base = cloudinaryBase(image.type)
+  const l1 = layer1Chain ? `${layer1Chain}/` : ''
+  const l2 = layer2Chain ? `${layer2Chain}/` : ''
+  return `${base}t_one/${l1}${l2}q_auto:good,f_auto,fl_lossy/w_${width}/${image.filename}`
 }
 
 function getCropOverlay(group, imgId, cropImgNatural, cropOverlayVisible) {
@@ -317,26 +366,22 @@ function getCropOverlay(group, imgId, cropImgNatural, cropOverlayVisible) {
   }
 }
 
-function buildTwoLayerUrl(image, layer1Chain, layer2Chain, width = 400) {
-  if (!image) return ''
-  const base = cloudinaryBase(image.type)
-  const l1 = layer1Chain ? `${layer1Chain}/` : ''
-  const l2 = layer2Chain ? `${layer2Chain}/` : ''
-  return `${base}t_one/${l1}${l2}q_auto:good,f_auto,fl_lossy/w_${width}/${image.filename}`
-}
-
 export function useCloudinary() {
   return {
     TRANSFORM_LABELS,
     DEFAULT_PARAMS,
+    useLocal,
     transformLabel,
     transformSummary,
     buildChain,
     cloudinaryBase,
     fixCloudinaryUrl,
+    localUrl,
+    thumbUrl,
     buildTransformedUrl,
     buildTwoLayerUrl,
     buildCropPreviewUrl,
-    getCropOverlay
+    getCropOverlay,
+    onImgError
   }
 }
