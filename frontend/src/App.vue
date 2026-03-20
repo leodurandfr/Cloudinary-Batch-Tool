@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Sun, Moon } from 'lucide-vue-next'
+import { Sun, Moon, HardDrive, Cloud } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import {
   NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink,
@@ -16,6 +16,7 @@ import { useScanner } from '@/composables/useScanner'
 import { useNavigation } from '@/composables/useNavigation'
 import { useReferences } from '@/composables/useReferences'
 import { useDisplayRules } from '@/composables/useDisplayRules'
+import { useCloudinary } from '@/composables/useCloudinary'
 
 const { inventory, loading, loadInventory, filteredImages } = useInventory()
 const { groups, loadGroups, syncGroupIds } = useGroups()
@@ -23,6 +24,7 @@ const { checkScanStatus } = useScanner()
 const { activeTab } = useNavigation()
 const { totalRefCount, loadRefsState } = useReferences()
 const { loadDisplayRules } = useDisplayRules()
+const { useLocal } = useCloudinary()
 
 const isDark = ref(localStorage.getItem('theme') === 'dark')
 
@@ -74,7 +76,17 @@ onMounted(async () => {
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
-      <div class="flex justify-end">
+      <div class="flex justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8"
+          :title="useLocal ? 'Images locales — cliquez pour Cloudinary' : 'Cloudinary — cliquez pour local'"
+          @click="useLocal = !useLocal"
+        >
+          <HardDrive v-if="useLocal" class="h-4 w-4" />
+          <Cloud v-else class="h-4 w-4" />
+        </Button>
         <Button variant="ghost" size="icon" class="h-8 w-8" @click="toggleTheme">
           <Sun v-if="isDark" class="h-4 w-4" />
           <Moon v-else class="h-4 w-4" />

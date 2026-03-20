@@ -22,7 +22,7 @@ const {
   removeImagesFromAllGroups, getGroupName, syncGroupIds
 } = useGroups()
 
-const { fixCloudinaryUrl } = useCloudinary()
+const { thumbUrl, onImgError } = useCloudinary()
 
 // --- Local UI state ---
 const selectedIds = reactive(new Set())
@@ -306,10 +306,11 @@ watch(showCreateGroupModal, (val) => {
 
             <!-- Image thumbnail -->
             <img
-              :src="fixCloudinaryUrl(img)"
+              :src="thumbUrl(img)"
               :alt="img.filename"
               loading="lazy"
               class="w-full aspect-square object-contain bg-white"
+              @error="onImgError"
             >
 
             <!-- Info footer -->

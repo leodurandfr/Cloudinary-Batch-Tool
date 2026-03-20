@@ -9,7 +9,7 @@ const props = defineProps({
 })
 
 const { getImageById, updateChain } = useGroups()
-const { fixCloudinaryUrl, cloudinaryBase } = useCloudinary()
+const { thumbUrl } = useCloudinary()
 const cursor = reactive({})
 
 const block = computed(() => props.group.transformations[props.blockIndex])
@@ -48,7 +48,7 @@ function onImageLoad(event) {
         block.value.params.ref_height = probe.naturalHeight
         updateChain(props.group)
       }
-      probe.src = `${cloudinaryBase(first.type)}t_one/q_auto:low,f_auto,fl_lossy/${first.filename}`
+      probe.src = thumbUrl(first)
     }
   }
 }
@@ -65,7 +65,7 @@ function onImageLoad(event) {
       @click="onClick"
     >
       <img
-        :src="fixCloudinaryUrl(firstImage, 'full_url')"
+        :src="thumbUrl(firstImage)"
         draggable="false"
         class="w-full block"
         @dragstart.prevent

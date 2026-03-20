@@ -11,6 +11,7 @@ import SlotTransformEditor from '@/components/layouts/SlotTransformEditor.vue'
 import TemplateView from '@/components/layouts/TemplateView.vue'
 import { useReferences } from '@/composables/useReferences'
 import { useDisplayRules } from '@/composables/useDisplayRules'
+import { useCloudinary } from '@/composables/useCloudinary'
 
 const {
   refsState,
@@ -25,6 +26,7 @@ const {
 } = useReferences()
 
 const { displayRules } = useDisplayRules()
+const { onImgError } = useCloudinary()
 
 const showSidebar = ref(true)
 const showRules = ref(false)
@@ -197,6 +199,7 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                       :alt="selectedRefLayout.cover.image.ref"
                       class="rounded-lg"
                       style="aspect-ratio: 1/1; object-fit: cover; max-width: 400px; margin: 0 auto; display: block"
+                      @error="onImgError"
                     >
                     <p class="text-[11px] text-muted-foreground mt-2 text-center">
                       {{ selectedRefLayout.cover.image.type }}
@@ -229,6 +232,7 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                     :alt="selectedRefLayout.zoom.image.ref"
                     class="w-full rounded-lg"
                     style="aspect-ratio: 8/5; object-fit: cover"
+                    @error="onImgError"
                   >
                   <p class="text-[11px] text-muted-foreground mt-2">
                     {{ selectedRefLayout.zoom.image.type }}
@@ -258,6 +262,7 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                         :src="item.finalUrl"
                         :alt="item.image.ref"
                         class="w-full rounded-lg bg-muted"
+                        @error="onImgError"
                       >
                       <Badge variant="secondary" class="text-[10px] mt-1.5">{{ item.image.type }}</Badge>
                     </div>
@@ -273,6 +278,7 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                         :src="item.finalUrl"
                         :alt="item.image.ref"
                         class="w-full rounded-lg bg-muted"
+                        @error="onImgError"
                       >
                       <Badge variant="secondary" class="text-[10px] mt-1.5">{{ item.image.type }}</Badge>
                     </div>

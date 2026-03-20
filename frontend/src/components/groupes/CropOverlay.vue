@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['cropImgLoad'])
-const { buildCropPreviewUrl, getCropOverlay } = useCloudinary()
+const { buildCropPreviewUrl, getCropOverlay, onImgError } = useCloudinary()
 
 const overlay = computed(() => getCropOverlay(props.group, props.imgId, props.cropImgNatural, props.cropOverlayVisible))
 
@@ -26,6 +26,7 @@ function onLoad(event) {
       loading="lazy"
       class="w-full block bg-white"
       @load="onLoad"
+      @error="onImgError"
     >
     <template v-if="overlay">
       <div class="absolute bg-black/50 pointer-events-none" :style="overlay.top" />
