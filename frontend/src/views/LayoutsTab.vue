@@ -248,36 +248,17 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                   <CardTitle class="text-sm">Galerie</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <!-- Scroll mode (carousel) -->
-                  <div
-                    v-if="selectedRefLayout.gallery.mode === 'scroll'"
-                    class="flex overflow-x-auto gap-3 pb-2"
-                  >
+                  <div class="flex gap-3">
                     <div
                       v-for="(item, i) in selectedRefLayout.gallery.items"
                       :key="i"
-                      class="shrink-0 w-[180px]"
+                      class="min-w-0"
                     >
                       <img
                         :src="item.finalUrl"
                         :alt="item.image.ref"
-                        class="w-full rounded-lg bg-muted"
-                        @error="onImgError"
-                      >
-                      <Badge variant="secondary" class="text-[10px] mt-1.5">{{ item.image.type }}</Badge>
-                    </div>
-                  </div>
-
-                  <!-- Two-column mode -->
-                  <div
-                    v-else-if="selectedRefLayout.gallery.mode === 'two-column'"
-                    class="grid grid-cols-2 gap-4"
-                  >
-                    <div v-for="(item, i) in selectedRefLayout.gallery.items" :key="i">
-                      <img
-                        :src="item.finalUrl"
-                        :alt="item.image.ref"
-                        class="w-full rounded-lg bg-muted"
+                        class="w-full h-auto rounded-lg bg-muted"
+                        @load="e => e.target.parentElement.style.flex = (e.target.naturalWidth / e.target.naturalHeight) + ' 1 0%'"
                         @error="onImgError"
                       >
                       <Badge variant="secondary" class="text-[10px] mt-1.5">{{ item.image.type }}</Badge>
