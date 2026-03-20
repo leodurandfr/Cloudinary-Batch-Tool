@@ -17,7 +17,7 @@ const cropImgNatural = reactive({})
 const emit = defineEmits(['update:previewCols'])
 
 const { getImageById, removeImageFromGroup } = useGroups()
-const { buildTransformedUrl, handleAfterError } = useCloudinary()
+const { buildTransformedUrl, fixCloudinaryUrl } = useCloudinary()
 
 const showAfter = ref(false)
 const selectedIds = reactive(new Set())
@@ -120,7 +120,6 @@ function onCropImgLoad(event, imgId) {
             :src="buildTransformedUrl(imgId, group)"
             loading="lazy"
             class="w-full block bg-white"
-            @error="handleAfterError($event, imgId)"
           >
           <!-- Before mode: crop overlay -->
           <CropOverlay
@@ -134,10 +133,9 @@ function onCropImgLoad(event, imgId) {
           <!-- Before mode: normal thumb -->
           <img
             v-else
-            :src="getImageById(imgId)?.thumb_url"
+            :src="fixCloudinaryUrl(getImageById(imgId))"
             loading="lazy"
             class="w-full block bg-white"
-            @error="handleAfterError($event, imgId)"
           >
         </div>
 

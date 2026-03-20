@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useCloudinary } from '@/composables/useCloudinary'
 
-const { handleAfterError, buildTwoLayerUrl } = useCloudinary()
+const { buildTwoLayerUrl, cloudinaryBase } = useCloudinary()
 
 const props = defineProps({
   layout: { type: Object, required: true },
@@ -33,10 +33,9 @@ const zoomUrl = computed(() => {
   const img = props.layout.zoom.image
   const l1 = props.layout.zoom.layer1Chain
   const l2 = props.layout.zoom.layer2Chain
-  const base = 'https://www.chanel.com/images/'
   const l1Part = l1 ? `${l1}/` : ''
   const l2Part = l2 ? `${l2}/` : ''
-  return `${base}t_one/${l1Part}${l2Part}c_fill,g_center,ar_1440:898,b_rgb:F9F9F9,q_auto:good,f_auto,fl_lossy/w_1440/${img.filename}`
+  return `${cloudinaryBase(img.type)}t_one/${l1Part}${l2Part}c_fill,g_center,ar_1440:898,b_rgb:F9F9F9,q_auto:good,f_auto,fl_lossy/w_1440/${img.filename}`
 })
 
 const carouselRef = ref(null)
@@ -97,7 +96,6 @@ function scrollCarousel(dir) {
           :src="coverUrl"
           :alt="refInfo.ref"
           class="tpl-hero__img"
-          @error="handleAfterError($event, layout.cover.image.id)"
         />
         <div v-else class="tpl-hero__placeholder">Aucune image cover</div>
       </div>
@@ -128,7 +126,7 @@ function scrollCarousel(dir) {
     <section class="tpl-media">
       <!-- Zoom -->
       <div v-if="layout.zoom.visible" class="tpl-zoom">
-        <img :src="zoomUrl" alt="" class="tpl-zoom__img" @error="handleAfterError($event, layout.zoom.image.id)" />
+        <img :src="zoomUrl" alt="" class="tpl-zoom__img" />
       </div>
 
       <!-- Gallery -->
@@ -148,7 +146,7 @@ function scrollCarousel(dir) {
                 : 'tpl-simple-product'"
               :style="{ '--pic-aspect-ratio': getAspectRatio(item) }"
             >
-              <img :src="galleryHiRes(item)" :alt="item.image.type" @error="handleAfterError($event, item.image.id)" />
+              <img :src="galleryHiRes(item)" :alt="item.image.type" />
             </div>
           </div>
         </div>
@@ -166,7 +164,7 @@ function scrollCarousel(dir) {
               class="tpl-pic-carousel__slide"
               :style="{ '--pic-aspect-ratio': getAspectRatio(item) }"
             >
-              <img :src="galleryHiRes(item)" :alt="item.image.type" @error="handleAfterError($event, item.image.id)" />
+              <img :src="galleryHiRes(item)" :alt="item.image.type" />
             </div>
           </div>
           <div class="tpl-pic-carousel__nav">

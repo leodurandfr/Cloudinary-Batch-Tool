@@ -12,6 +12,7 @@ const TRANSFORM_LABELS = {
   quality: 'Qualité', format: 'Format',
   bgremoval: 'Suppression de fond (IA)', upscale: 'Upscale (IA)',
   gen_fill: 'Gen Fill (IA)',
+  zoom: 'Zoom',
   custom: 'Custom'
 }
 
@@ -36,7 +37,8 @@ const DEFAULT_PARAMS = {
   format: { value: 'auto' },
   bgremoval: {},
   upscale: {},
-  gen_fill: { prompt: '' }
+  gen_fill: { prompt: '' },
+  zoom: { level: 1, x: 0.5, y: 0.5, ref_width: 0, ref_height: 0 }
 }
 
 function transformLabel(type) {
@@ -76,6 +78,7 @@ function transformSummary(block) {
     case 'bgremoval': return 'IA'
     case 'upscale': return 'IA'
     case 'gen_fill': return p.prompt || 'auto'
+    case 'zoom': return `×${p.level ?? 1}`
     default: return ''
   }
 }
@@ -179,15 +182,55 @@ function buildChain(transformations) {
       case 'gen_fill':
         parts.push(p.prompt ? `b_gen_fill:${p.prompt}` : 'b_gen_fill')
         break
+      case 'zoom': {
+        const zoom = p.level ?? 1
+        const rw = p.ref_width || 0
+        const rh = p.ref_height || 0
+        if (rw > 0 && rh > 0 && zoom !== 1) {
+          if (zoom > 1) {
+            const cropW = Math.round(rw / zoom)
+            const cropH = Math.round(rh / zoom)
+            const cx = p.x ?? 0.5
+            const cy = p.y ?? 0.5
+            const fx = Math.round(cx * rw)
+            const fy = Math.round(cy * rh)
+            const ox = Math.max(0, Math.min(fx - Math.round(cropW / 2), rw - cropW))
+            const oy = Math.max(0, Math.min(fy - Math.round(cropH / 2), rh - cropH))
+            parts.push(`c_crop,w_${cropW},h_${cropH},x_${ox},y_${oy},g_north_west`)
+          } else {
+            const padW = Math.round(rw / zoom)
+            const padH = Math.round(rh / zoom)
+            parts.push(`c_pad,w_${padW},h_${padH},g_center,b_white`)
+          }
+        }
+        break
+      }
     }
   }
   return parts.join('/')
 }
 
+function isPorteeType(type) {
+  return /^portee(-\d+)?$/.test(type)
+}
+
+function cloudinaryBase(imageType) {
+  return `https://www.chanel.com/images/${isPorteeType(imageType) ? 'as/' : ''}`
+}
+
+function fixCloudinaryUrl(image, urlKey = 'thumb_url') {
+  const url = image?.[urlKey]
+  if (!url) return ''
+  if (isPorteeType(image.type)) {
+    return url.replace('/images/t_one/', '/images/as/t_one/')
+  }
+  return url
+}
+
 function buildTransformedUrl(imgId, group) {
   const img = imageMap.value[imgId]
-  if (!img || !group.cloudinary_chain) return img?.thumb_url || ''
-  const base = 'https://www.chanel.com/images/'
+  if (!img || !group.cloudinary_chain) return fixCloudinaryUrl(img)
+  const base = cloudinaryBase(img.type)
   const chain = group.cloudinary_chain
   return `${base}t_one/${chain}/q_auto:good,f_auto,fl_lossy/w_400/${img.filename}`
 }
@@ -197,7 +240,7 @@ function buildCropPreviewUrl(imgId, group) {
   if (!img) return ''
   const withoutCrop = (group.transformations || []).filter(b => b.type !== 'crop')
   const chain = buildChain(withoutCrop)
-  const base = 'https://www.chanel.com/images/'
+  const base = cloudinaryBase(img.type)
   const chainPart = chain ? `${chain}/` : ''
   return `${base}t_one/${chainPart}q_auto:low,f_auto,fl_lossy/${img.filename}`
 }
@@ -276,17 +319,10 @@ function getCropOverlay(group, imgId, cropImgNatural, cropOverlayVisible) {
 
 function buildTwoLayerUrl(image, layer1Chain, layer2Chain, width = 400) {
   if (!image) return ''
-  const base = 'https://www.chanel.com/images/'
+  const base = cloudinaryBase(image.type)
   const l1 = layer1Chain ? `${layer1Chain}/` : ''
   const l2 = layer2Chain ? `${layer2Chain}/` : ''
   return `${base}t_one/${l1}${l2}q_auto:good,f_auto,fl_lossy/w_${width}/${image.filename}`
-}
-
-function handleAfterError(event, imgId) {
-  if (event.target.dataset.fallback) return
-  event.target.dataset.fallback = '1'
-  const img = imageMap.value[imgId]
-  if (img) event.target.src = '/images/' + img.local_path
 }
 
 export function useCloudinary() {
@@ -296,10 +332,11 @@ export function useCloudinary() {
     transformLabel,
     transformSummary,
     buildChain,
+    cloudinaryBase,
+    fixCloudinaryUrl,
     buildTransformedUrl,
     buildTwoLayerUrl,
     buildCropPreviewUrl,
-    getCropOverlay,
-    handleAfterError
+    getCropOverlay
   }
 }

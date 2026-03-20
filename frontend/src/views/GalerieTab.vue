@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogD
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useInventory } from '@/composables/useInventory'
 import { useGroups } from '@/composables/useGroups'
+import { useCloudinary } from '@/composables/useCloudinary'
 
 const {
   inventory, filterCategory, filterType, filterState, filterRef,
@@ -20,6 +21,8 @@ const {
   groups, createGroup, addToGroup, ungroupImage, ungroupImages,
   removeImagesFromAllGroups, getGroupName, syncGroupIds
 } = useGroups()
+
+const { fixCloudinaryUrl } = useCloudinary()
 
 // --- Local UI state ---
 const selectedIds = reactive(new Set())
@@ -112,12 +115,6 @@ async function handleDeleteSelected() {
   selectedIds.clear()
 }
 
-function onImageError(event, img) {
-  if (!event.target.dataset.fallback) {
-    event.target.dataset.fallback = '1'
-    event.target.src = '/images/' + img.local_path
-  }
-}
 
 // Focus group name input when modal opens
 watch(showCreateGroupModal, (val) => {
@@ -309,11 +306,10 @@ watch(showCreateGroupModal, (val) => {
 
             <!-- Image thumbnail -->
             <img
-              :src="img.thumb_url"
+              :src="fixCloudinaryUrl(img)"
               :alt="img.filename"
               loading="lazy"
               class="w-full aspect-square object-contain bg-white"
-              @error="onImageError($event, img)"
             >
 
             <!-- Info footer -->

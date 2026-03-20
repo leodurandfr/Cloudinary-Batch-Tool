@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import { useGroups } from '@/composables/useGroups'
+import { useCloudinary } from '@/composables/useCloudinary'
 
 const props = defineProps({
   group: { type: Object, required: true },
@@ -8,6 +9,7 @@ const props = defineProps({
 })
 
 const { getImageById, updateChain } = useGroups()
+const { fixCloudinaryUrl, cloudinaryBase } = useCloudinary()
 const cursor = reactive({})
 
 const block = computed(() => props.group.transformations[props.blockIndex])
@@ -46,15 +48,11 @@ function onImageLoad(event) {
         block.value.params.ref_height = probe.naturalHeight
         updateChain(props.group)
       }
-      probe.src = `https://www.chanel.com/images/t_one/q_auto:low,f_auto,fl_lossy/${first.filename}`
+      probe.src = `${cloudinaryBase(first.type)}t_one/q_auto:low,f_auto,fl_lossy/${first.filename}`
     }
   }
 }
 
-function onImageError(event) {
-  const first = firstImage.value
-  if (first) event.target.src = '/images/' + first.local_path
-}
 </script>
 
 <template>
@@ -67,12 +65,11 @@ function onImageError(event) {
       @click="onClick"
     >
       <img
-        :src="firstImage.full_url"
+        :src="fixCloudinaryUrl(firstImage, 'full_url')"
         draggable="false"
         class="w-full block"
         @dragstart.prevent
         @load="onImageLoad"
-        @error="onImageError"
       >
       <!-- Crosshair lines -->
       <div

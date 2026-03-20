@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useCloudinary } from '@/composables/useCloudinary'
-import { useGroups } from '@/composables/useGroups'
 
 const props = defineProps({
   imgId: { type: String, required: true },
@@ -11,21 +10,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['cropImgLoad'])
-const { buildCropPreviewUrl, getCropOverlay, handleAfterError } = useCloudinary()
-const { getImageById } = useGroups()
+const { buildCropPreviewUrl, getCropOverlay } = useCloudinary()
 
 const overlay = computed(() => getCropOverlay(props.group, props.imgId, props.cropImgNatural, props.cropOverlayVisible))
 
 function onLoad(event) {
   emit('cropImgLoad', event, props.imgId)
-}
-
-function onError(event) {
-  const img = getImageById(props.imgId)
-  if (img && !event.target.dataset.fallback) {
-    event.target.dataset.fallback = '1'
-    event.target.src = '/images/' + img.local_path
-  }
 }
 </script>
 
@@ -36,7 +26,6 @@ function onError(event) {
       loading="lazy"
       class="w-full block bg-white"
       @load="onLoad"
-      @error="onError"
     >
     <template v-if="overlay">
       <div class="absolute bg-black/50 pointer-events-none" :style="overlay.top" />
