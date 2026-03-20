@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { X, Minus, Plus } from 'lucide-vue-next'
+import { Check, X, Minus, Plus } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import CropOverlay from './CropOverlay.vue'
 import { useGroups } from '@/composables/useGroups'
@@ -89,31 +89,30 @@ function onCropImgLoad(event, imgId) {
       <div
         v-for="imgId in group.image_ids"
         :key="imgId"
-        class="relative rounded-lg border-2 overflow-hidden bg-card transition-colors"
+        class="group/card relative rounded-lg border-2 overflow-hidden bg-card transition-colors cursor-pointer"
         :class="selectedIds.has(imgId) ? 'border-primary' : 'border-border'"
       >
-        <!-- Selection + remove controls -->
-        <div class="absolute top-1.5 left-1.5 z-10 flex gap-1">
-          <button
-            class="w-5 h-5 rounded-full border flex items-center justify-center transition-colors"
-            :class="selectedIds.has(imgId)
-              ? 'bg-primary border-primary text-primary-foreground'
-              : 'border-white/50 bg-black/40 text-white'"
-            @click.stop="toggleSelect(imgId)"
-          >
-            <Check v-if="selectedIds.has(imgId)" class="w-3 h-3" />
-          </button>
+        <!-- Check circle (top-right) — hover-only when unselected -->
+        <div
+          class="absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full border flex items-center justify-center transition-all"
+          :class="selectedIds.has(imgId)
+            ? 'bg-primary border-primary text-primary-foreground'
+            : 'border-white/40 bg-black/20 text-white opacity-0 group-hover/card:opacity-100'"
+          @click.stop="toggleSelect(imgId)"
+        >
+          <Check v-if="selectedIds.has(imgId)" class="w-3 h-3" />
         </div>
+
+        <!-- Ungroup button (top-left, hover only) -->
         <button
-          class="absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-destructive transition-colors"
-          title="Retirer du groupe"
+          class="absolute top-1.5 left-1.5 z-10 text-[10px] text-white/60 opacity-0 group-hover/card:opacity-100 hover:!text-white transition-all"
           @click.stop="removeImageFromGroup(group, imgId)"
         >
-          <X class="w-3 h-3" />
+          Retirer
         </button>
 
         <!-- Image content -->
-        <div @click="toggleSelect(imgId)" class="cursor-pointer">
+        <div @click="toggleSelect(imgId)">
           <!-- After mode -->
           <img
             v-if="showAfter"
@@ -141,9 +140,9 @@ function onCropImgLoad(event, imgId) {
         </div>
 
         <!-- Info footer -->
-        <div class="px-2 py-1.5 text-[11px]">
-          <span class="font-medium text-foreground">{{ getImageById(imgId)?.ref }}</span>
-          <span class="text-muted-foreground"> · {{ getImageById(imgId)?.type }}</span>
+        <div class="px-2 py-1.5 text-[11px] flex items-center justify-between gap-2">
+          <span class="font-medium text-foreground truncate">{{ getImageById(imgId)?.ref }}</span>
+          <span class="text-muted-foreground shrink-0">{{ getImageById(imgId)?.type }}</span>
         </div>
       </div>
     </div>

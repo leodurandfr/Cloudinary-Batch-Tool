@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, computed, ref, watch, nextTick } from 'vue'
-import { Check, Search } from 'lucide-vue-next'
+import { Check, Search, Link } from 'lucide-vue-next'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import SelectionBar from '@/components/SelectionBar.vue'
@@ -288,46 +288,22 @@ watch(showCreateGroupModal, (val) => {
           <div
             v-for="img in filteredImages"
             :key="img.id"
-            class="relative rounded-lg border-2 overflow-hidden cursor-pointer transition-all bg-card"
+            class="group/card relative rounded-lg border-2 overflow-hidden cursor-pointer transition-all bg-card"
             :class="{
               'border-primary': selectedIds.has(img.id),
-              'border-border': !selectedIds.has(img.id),
-              'opacity-50 hover:opacity-70': img.group_id && !selectedIds.has(img.id)
+              'border-border': !selectedIds.has(img.id)
             }"
             @click="toggleSelect(img)"
           >
-            <!-- Check circle (top-right) -->
+            <!-- Check circle (top-right) — hover-only when unselected -->
             <div
-              class="absolute top-2 right-2 z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm transition-all"
+              class="absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full border flex items-center justify-center transition-all"
               :class="selectedIds.has(img.id)
                 ? 'bg-primary border-primary text-primary-foreground'
-                : 'border-white/50 bg-black/30 text-white'"
+                : 'border-white/40 bg-black/20 text-white opacity-0 group-hover/card:opacity-100'"
             >
-              <Check v-if="selectedIds.has(img.id)" class="w-3.5 h-3.5" />
+              <Check v-if="selectedIds.has(img.id)" class="w-3 h-3" />
             </div>
-
-            <!-- Type badge (top-left) -->
-            <Badge variant="secondary" class="absolute top-2 left-2 z-10 text-[10px] px-1.5 py-0">
-              {{ img.type }}
-            </Badge>
-
-            <!-- Group badge (bottom-right) -->
-            <Badge
-              v-if="img.group_id"
-              variant="outline"
-              class="absolute bottom-8 right-2 z-10 text-[10px] bg-black/60"
-            >
-              {{ getGroupName(img.group_id) }}
-            </Badge>
-
-            <!-- Ungroup button -->
-            <button
-              v-if="img.group_id"
-              class="absolute bottom-8 left-2 z-10 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white hover:bg-destructive transition-colors"
-              @click.stop="ungroupImage(img.id)"
-            >
-              Retirer
-            </button>
 
             <!-- Image thumbnail -->
             <img
@@ -339,9 +315,24 @@ watch(showCreateGroupModal, (val) => {
             >
 
             <!-- Info footer -->
-            <div class="px-2.5 py-2 text-[11px]">
-              <span class="font-medium text-foreground">{{ img.ref }}</span>
-              <span class="text-muted-foreground"> · {{ img.category }}</span>
+            <div class="px-2.5 py-2 text-[11px] flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1 min-w-0">
+                <Link v-if="img.group_id" class="w-3 h-3 text-muted-foreground shrink-0" />
+                <span class="truncate">
+                  <span class="font-medium text-foreground">{{ img.ref }}</span>
+                  <span class="text-muted-foreground"> · {{ img.category }}</span>
+                </span>
+              </div>
+              <span v-if="img.group_id" class="shrink-0">
+                <span class="text-muted-foreground group-hover/card:hidden">{{ img.type }}</span>
+                <button
+                  class="hidden group-hover/card:inline text-primary/70 hover:text-primary text-[10px] transition-colors"
+                  @click.stop="ungroupImage(img.id)"
+                >
+                  Dégrouper
+                </button>
+              </span>
+              <span v-else class="text-muted-foreground shrink-0">{{ img.type }}</span>
             </div>
           </div>
         </div>
