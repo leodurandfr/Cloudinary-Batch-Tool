@@ -118,12 +118,15 @@ function findGroupForImage(imageId) {
   return groups.value.find(g => g.image_ids.includes(imageId)) || null
 }
 
+const SLOT_WIDTHS = { cover: 800, zoom: 1200, gallery: 800, gallery_zoom: 800 }
+
 function enrichImage(image, slotKey) {
   if (!image) return null
   const group = findGroupForImage(image.id)
   const layer1Chain = group ? group.cloudinary_chain : ''
   const layer2Chain = displayRules.value?.slots?.[slotKey]?.cloudinary_chain || ''
-  const finalUrl = buildTwoLayerUrl(image, layer1Chain, layer2Chain)
+  const width = SLOT_WIDTHS[slotKey] || 800
+  const finalUrl = buildTwoLayerUrl(image, layer1Chain, layer2Chain, width)
   return { image, layer1Chain, layer2Chain, finalUrl }
 }
 

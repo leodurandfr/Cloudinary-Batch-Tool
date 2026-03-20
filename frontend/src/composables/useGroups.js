@@ -4,7 +4,7 @@ import { useCloudinary } from './useCloudinary'
 
 const groups = ref([])
 const { inventory, imageMap } = useInventory()
-const { buildChain, buildTransformedUrl, DEFAULT_PARAMS } = useCloudinary()
+const { buildChain, buildTransformedUrl, localTransforms, useLocal, DEFAULT_PARAMS } = useCloudinary()
 
 function syncGroupIds() {
   if (!inventory.value) return
@@ -120,6 +120,15 @@ function removeSelectedFromGroup(group, selectedSet) {
   saveGroups()
 }
 
+function renameGroup(groupId, newName) {
+  const trimmed = newName.trim()
+  if (!trimmed) return
+  const group = groups.value.find(g => g.id === groupId)
+  if (!group) return
+  group.name = trimmed
+  saveGroups()
+}
+
 function getGroupName(groupId) {
   const g = groups.value.find(g => g.id === groupId)
   return g ? g.name : ''
@@ -162,8 +171,8 @@ function reorderTransform(group, from, to) {
 }
 
 function updateChain(group) {
-
   group.cloudinary_chain = buildChain(group.transformations)
+  console.log('[DEBUG updateChain]', group.name, 'chain:', group.cloudinary_chain, 'useLocal:', useLocal.value)
   saveGroups()
 }
 
@@ -212,27 +221,40 @@ function exportAll() {
 async function exportImages(groupId, format = 'jpg', onProgress) {
   const group = groups.value.find(g => g.id === groupId)
   if (!group) return
-  if (!group.cloudinary_chain) {
+
+  const isLocal = useLocal.value
+
+  if (!isLocal && !group.cloudinary_chain) {
     if (onProgress) onProgress({ error: 'Aucune transformation configurée pour ce groupe.' })
     return
   }
 
-
+  const filtered = localTransforms(group.transformations)
+  if (isLocal && !filtered.length) {
+    if (onProgress) onProgress({ error: 'Aucune transformation locale configurée pour ce groupe.' })
+    return
+  }
 
   const images = group.image_ids.map(imgId => {
     const img = imageMap.value[imgId]
-    return {
+    const entry = {
       id: imgId,
-      filename: img?.filename,
-      url: buildTransformedUrl(imgId, group).replace('/w_400/', '/w_1240/')
+      filename: img?.filename
     }
+    if (isLocal) {
+      entry.local_path = img?.local_path
+      entry.transformations = filtered
+    } else {
+      entry.url = buildTransformedUrl(imgId, group).replace('/w_400/', '/w_1240/')
+    }
+    return entry
   })
 
   try {
     const res = await fetch('/api/export-images', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ group_name: group.name, format, images })
+      body: JSON.stringify({ group_name: group.name, format, images, local: isLocal })
     })
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
@@ -295,6 +317,7 @@ export function useGroups() {
     removeImagesFromAllGroups,
     removeImageFromGroup,
     removeSelectedFromGroup,
+    renameGroup,
     getGroupName,
     getImageById,
     addTransform,

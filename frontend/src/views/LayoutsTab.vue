@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-vue-next'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
@@ -37,6 +37,21 @@ const has3d = computed(() =>
 )
 
 const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
+
+// Auto-select first ref when data loads and nothing is selected
+watch(refsByCategory, (val) => {
+  if (!selectedRef.value) {
+    const categories = Object.keys(val)
+    if (categories.length > 0) {
+      const firstCat = categories[0]
+      const refs = Object.keys(val[firstCat])
+      if (refs.length > 0) {
+        expandedCategories[firstCat] = true
+        selectRef(refs[0], firstCat)
+      }
+    }
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -129,13 +144,7 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
             </p>
           </div>
           <div class="flex items-center gap-4 shrink-0">
-            <Label class="text-xs text-muted-foreground">Vue 3D</Label>
-            <Switch
-              :model-value="has3d"
-              @update:model-value="toggleHas3d(selectedRef.ref)"
-            />
-
-            <div class="flex items-center border rounded-md overflow-hidden ml-2">
+            <div class="flex items-center border rounded-md overflow-hidden">
               <Button
                 variant="ghost"
                 size="sm"
@@ -181,6 +190,14 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                   <div class="flex items-center gap-2">
                     <CardTitle class="text-sm">Cover</CardTitle>
                     <Badge variant="outline" class="text-[10px]">1:1</Badge>
+                    <Badge v-if="selectedRefLayout?.cover" variant="secondary" class="text-[10px]">{{ selectedRefLayout.cover.image.type }}</Badge>
+                    <div class="flex items-center gap-2 ml-auto">
+                      <Label class="text-xs text-muted-foreground">Vue 3D</Label>
+                      <Switch
+                        :model-value="has3d"
+                        @update:model-value="toggleHas3d(selectedRef.ref)"
+                      />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -201,11 +218,6 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                       style="aspect-ratio: 1/1; object-fit: cover; max-width: 400px; margin: 0 auto; display: block"
                       @error="onImgError"
                     >
-                    <p class="text-[11px] text-muted-foreground mt-2 text-center">
-                      {{ selectedRefLayout.cover.image.type }}
-                      <template v-if="selectedRefLayout.cover.layer1Chain"> · L1: {{ selectedRefLayout.cover.layer1Chain }}</template>
-                      <template v-if="selectedRefLayout.cover.layer2Chain"> · L2: {{ selectedRefLayout.cover.layer2Chain }}</template>
-                    </p>
                   </template>
                   <!-- No cover -->
                   <div
@@ -224,6 +236,7 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                   <div class="flex items-center gap-2">
                     <CardTitle class="text-sm">Zoom</CardTitle>
                     <Badge variant="outline" class="text-[10px]">8:5</Badge>
+                    <Badge variant="secondary" class="text-[10px]">{{ selectedRefLayout.zoom.image.type }}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -234,11 +247,6 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                     style="aspect-ratio: 8/5; object-fit: cover"
                     @error="onImgError"
                   >
-                  <p class="text-[11px] text-muted-foreground mt-2">
-                    {{ selectedRefLayout.zoom.image.type }}
-                    <template v-if="selectedRefLayout.zoom.layer1Chain"> · L1: {{ selectedRefLayout.zoom.layer1Chain }}</template>
-                    <template v-if="selectedRefLayout.zoom.layer2Chain"> · L2: {{ selectedRefLayout.zoom.layer2Chain }}</template>
-                  </p>
                 </CardContent>
               </Card>
 
@@ -254,6 +262,7 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                       :key="i"
                       class="min-w-0"
                     >
+                      <Badge variant="secondary" class="text-[10px] mb-1.5">{{ item.image.type }}</Badge>
                       <img
                         :src="item.finalUrl"
                         :alt="item.image.ref"
@@ -261,7 +270,6 @@ const SLOT_KEYS = ['cover', 'zoom', 'gallery', 'gallery_zoom']
                         @load="e => e.target.parentElement.style.flex = (e.target.naturalWidth / e.target.naturalHeight) + ' 1 0%'"
                         @error="onImgError"
                       >
-                      <Badge variant="secondary" class="text-[10px] mt-1.5">{{ item.image.type }}</Badge>
                     </div>
                   </div>
                 </CardContent>

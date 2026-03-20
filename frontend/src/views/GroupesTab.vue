@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, nextTick, watch } from 'vue'
 import { PanelRightClose, PanelRightOpen } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import SelectionBar from '@/components/SelectionBar.vue'
@@ -14,7 +14,7 @@ import ExportModal from '@/components/groupes/ExportModal.vue'
 import { useGroups } from '@/composables/useGroups'
 
 const {
-  groups, deleteGroup, exportGroup, exportAll, formatDate
+  groups, deleteGroup, renameGroup, exportGroup, exportAll, formatDate
 } = useGroups()
 
 // --- Local UI state ---
@@ -25,13 +25,43 @@ const showDeleteConfirm = ref(false)
 const showExportModal = ref(false)
 const previewGridRef = ref(null)
 const showTransforms = ref(true)
+const editingGroupId = ref(null)
+const editingName = ref('')
+const editInputRef = ref(null)
 
 const selectedGroup = computed(() =>
   groups.value.find(g => g.id === selectedGroupId.value) || null
 )
 
+// Auto-select first group when groups load and nothing is selected
+watch(groups, (val) => {
+  if (!selectedGroupId.value && val.length > 0) {
+    selectedGroupId.value = val[0].id
+  }
+}, { immediate: true })
+
 function selectGroup(groupId) {
   selectedGroupId.value = selectedGroupId.value === groupId ? null : groupId
+}
+
+function startRename(group) {
+  editingGroupId.value = group.id
+  editingName.value = group.name
+  nextTick(() => {
+    editInputRef.value?.focus()
+    editInputRef.value?.select()
+  })
+}
+
+function commitRename() {
+  if (editingGroupId.value) {
+    renameGroup(editingGroupId.value, editingName.value)
+  }
+  editingGroupId.value = null
+}
+
+function cancelRename() {
+  editingGroupId.value = null
 }
 
 function confirmDelete() {
@@ -72,7 +102,21 @@ function handleDelete() {
             @click="selectGroup(group.id)"
           >
             <div class="flex items-center justify-between gap-2">
-              <span class="text-sm font-medium truncate">{{ group.name }}</span>
+              <input
+                v-if="editingGroupId === group.id"
+                ref="editInputRef"
+                v-model="editingName"
+                class="text-sm font-medium bg-transparent border-b border-primary outline-none w-full min-w-0"
+                @blur="commitRename"
+                @keydown.enter="commitRename"
+                @keydown.escape="cancelRename"
+                @click.stop
+              />
+              <span
+                v-else
+                class="text-sm font-medium truncate"
+                @dblclick.stop="startRename(group)"
+              >{{ group.name }}</span>
               <Badge variant="secondary" class="text-[10px] shrink-0">{{ group.image_ids.length }}</Badge>
             </div>
             <div class="text-[11px] text-muted-foreground mt-1 truncate">
