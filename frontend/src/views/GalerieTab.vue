@@ -24,6 +24,22 @@ const {
 
 const { thumbUrl, onImgError } = useCloudinary()
 
+const sortedCategories = computed(() =>
+  Object.entries(inventory.value?.stats?.by_category || {}).sort(([, a], [, b]) => b - a)
+)
+
+const productTypes = computed(() =>
+  Object.entries(inventory.value?.stats?.by_type || {})
+    .filter(([type]) => !type.startsWith('portee'))
+    .sort(([, a], [, b]) => b - a)
+)
+
+const porteeTypes = computed(() =>
+  Object.entries(inventory.value?.stats?.by_type || {})
+    .filter(([type]) => type.startsWith('portee'))
+    .sort(([, a], [, b]) => b - a)
+)
+
 // --- Local UI state ---
 const selectedIds = reactive(new Set())
 const showCreateGroupModal = ref(false)
@@ -138,27 +154,25 @@ watch(showCreateGroupModal, (val) => {
               Catégorie
             </AccordionTrigger>
             <AccordionContent>
-              <div class="flex flex-col gap-0.5">
-                <Button
-                  :variant="filterCategory === null ? 'default' : 'ghost'"
-                  size="sm"
-                  class="w-full justify-between h-8 text-xs"
+              <div class="flex flex-col gap-px">
+                <button
+                  class="flex items-center justify-between rounded px-2 h-7 text-xs transition-colors"
+                  :class="filterCategory === null ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'"
                   @click="filterCategory = null"
                 >
                   Toutes
-                  <span class="opacity-60">{{ inventory?.stats?.processable }}</span>
-                </Button>
-                <Button
-                  v-for="(count, cat) in inventory?.stats?.by_category"
+                  <span class="text-muted-foreground">{{ inventory?.stats?.processable }}</span>
+                </button>
+                <button
+                  v-for="[cat, count] in sortedCategories"
                   :key="cat"
-                  :variant="filterCategory === cat ? 'default' : 'ghost'"
-                  size="sm"
-                  class="w-full justify-between h-8 text-xs"
+                  class="flex items-center justify-between rounded px-2 h-7 text-xs transition-colors"
+                  :class="filterCategory === cat ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'"
                   @click="filterCategory = cat"
                 >
                   {{ cat }}
-                  <span class="opacity-60">{{ count }}</span>
-                </Button>
+                  <span class="text-muted-foreground">{{ count }}</span>
+                </button>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -169,27 +183,41 @@ watch(showCreateGroupModal, (val) => {
               Type
             </AccordionTrigger>
             <AccordionContent>
-              <div class="flex flex-col gap-0.5">
-                <Button
-                  :variant="filterType === null ? 'default' : 'ghost'"
-                  size="sm"
-                  class="w-full justify-between h-8 text-xs"
+              <div class="flex flex-col gap-px">
+                <button
+                  class="flex items-center justify-between rounded px-2 h-7 text-xs transition-colors"
+                  :class="filterType === null ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'"
                   @click="filterType = null"
                 >
                   Tous
-                  <span class="opacity-60">{{ inventory?.stats?.processable }}</span>
-                </Button>
-                <Button
-                  v-for="(count, type) in inventory?.stats?.by_type"
+                  <span class="text-muted-foreground">{{ inventory?.stats?.processable }}</span>
+                </button>
+
+                <!-- Produits -->
+                <span class="text-[9px] uppercase tracking-widest text-muted-foreground mt-2 mb-0.5 px-1">Produits</span>
+                <button
+                  v-for="[type, count] in productTypes"
                   :key="type"
-                  :variant="filterType === type ? 'default' : 'ghost'"
-                  size="sm"
-                  class="w-full justify-between h-8 text-xs"
+                  class="flex items-center justify-between rounded px-2 h-7 text-xs transition-colors"
+                  :class="filterType === type ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'"
                   @click="filterType = type"
                 >
                   {{ type }}
-                  <span class="opacity-60">{{ count }}</span>
-                </Button>
+                  <span class="text-muted-foreground">{{ count }}</span>
+                </button>
+
+                <!-- Portées -->
+                <span class="text-[9px] uppercase tracking-widest text-muted-foreground mt-2 mb-0.5 px-1">Portées</span>
+                <button
+                  v-for="[type, count] in porteeTypes"
+                  :key="type"
+                  class="flex items-center justify-between rounded px-2 h-7 text-xs transition-colors"
+                  :class="filterType === type ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'"
+                  @click="filterType = type"
+                >
+                  {{ type }}
+                  <span class="text-muted-foreground">{{ count }}</span>
+                </button>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -200,33 +228,30 @@ watch(showCreateGroupModal, (val) => {
               État
             </AccordionTrigger>
             <AccordionContent>
-              <div class="flex flex-col gap-0.5">
-                <Button
-                  :variant="filterState === null ? 'default' : 'ghost'"
-                  size="sm"
-                  class="w-full justify-between h-8 text-xs"
+              <div class="flex flex-col gap-px">
+                <button
+                  class="flex items-center justify-between rounded px-2 h-7 text-xs transition-colors"
+                  :class="filterState === null ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'"
                   @click="filterState = null"
                 >
                   Tous
-                </Button>
-                <Button
-                  :variant="filterState === 'ungrouped' ? 'default' : 'ghost'"
-                  size="sm"
-                  class="w-full justify-between h-8 text-xs"
+                </button>
+                <button
+                  class="flex items-center justify-between rounded px-2 h-7 text-xs transition-colors"
+                  :class="filterState === 'ungrouped' ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'"
                   @click="filterState = 'ungrouped'"
                 >
                   Non groupées
-                  <span class="opacity-60">{{ ungroupedCount }}</span>
-                </Button>
-                <Button
-                  :variant="filterState === 'grouped' ? 'default' : 'ghost'"
-                  size="sm"
-                  class="w-full justify-between h-8 text-xs"
+                  <span class="text-muted-foreground">{{ ungroupedCount }}</span>
+                </button>
+                <button
+                  class="flex items-center justify-between rounded px-2 h-7 text-xs transition-colors"
+                  :class="filterState === 'grouped' ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'"
                   @click="filterState = 'grouped'"
                 >
                   Groupées
-                  <span class="opacity-60">{{ groupedCount }}</span>
-                </Button>
+                  <span class="text-muted-foreground">{{ groupedCount }}</span>
+                </button>
               </div>
             </AccordionContent>
           </AccordionItem>
